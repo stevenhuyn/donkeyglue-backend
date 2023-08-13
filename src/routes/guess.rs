@@ -8,7 +8,9 @@ use uuid::Uuid;
 
 use crate::Context;
 
-pub struct GuessRequest {}
+pub struct GuessRequest {
+    guess: String,
+}
 
 pub async fn post_game(
     State(context): State<Arc<Context>>,
@@ -17,5 +19,6 @@ pub async fn post_game(
 ) {
     let games = context.games.read().await;
     let game = games.get(&game_id).unwrap();
-    let data = game.write().await;
+    let mut data = game.write().await;
+    data.make_guess(payload.guess);
 }

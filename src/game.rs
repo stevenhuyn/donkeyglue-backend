@@ -81,24 +81,16 @@ impl GameState {
         }
     }
 
-    pub fn make_guess(self, guess: String) -> Self {
-        match self {
-            GameState::Guessing(team, mut words, clue, mut guesses) => {
-                let word = words.get_mut(&guess);
-                if let Some(word) = word {
-                    word.guessed = true;
-                    guesses -= 1;
+    pub fn make_guess(&mut self, guess: String) {
+        if let GameState::Guessing(team, words, clue, guesses) = self {
+            if let Some(word) = words.get_mut(&guess) {
+                word.guessed = true;
+                *guesses -= 1;
 
-                    if guesses == 0 {
-                        return GameState::WaitingForClue(team.other(), words);
-                    } else {
-                        return GameState::Guessing(team, words, clue, guesses);
-                    }
+                if *guesses == 0 {
+                    *self = GameState::WaitingForClue(team.other(), *words);
                 }
-
-                GameState::Guessing(team, words, clue, guesses)
             }
-            _ => self,
         }
     }
 }
