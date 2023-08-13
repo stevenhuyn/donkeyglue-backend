@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt};
 
 enum Team {
     Red,
@@ -45,14 +45,34 @@ type Words = HashMap<String, Word>;
 
 type Guesses = u8;
 
-enum GameState {
+struct Human {
+    role: Role,
+    team: Team,
+}
+
+pub enum GameState {
     WaitingForClue(Team, Words),
     Guessing(Team, Words, Clue, Guesses),
     GameOver,
 }
 
+impl fmt::Display for GameState {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            GameState::WaitingForClue(_, _) => write!(f, "WaitingForClue"),
+            GameState::Guessing(_, _, _, _) => write!(f, "Guessing"),
+            GameState::GameOver => write!(f, "GameOver"),
+        }
+    }
+}
+
 impl GameState {
-    fn provide_clue(self, clue: String, number: u8) -> Self {
+    pub fn new() -> Self {
+        let words = HashMap::new();
+        GameState::WaitingForClue(Team::Red, words)
+    }
+
+    pub fn provide_clue(self, clue: String, number: u8) -> Self {
         match self {
             GameState::WaitingForClue(team, words) => {
                 GameState::Guessing(team, words, Clue { word: clue, number }, number)
@@ -61,7 +81,7 @@ impl GameState {
         }
     }
 
-    fn make_guess(self, guess: String) -> Self {
+    pub fn make_guess(self, guess: String) -> Self {
         match self {
             GameState::Guessing(team, mut words, clue, mut guesses) => {
                 let word = words.get_mut(&guess);
