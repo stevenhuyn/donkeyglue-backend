@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 enum Team {
     Red,
     Blue,
@@ -25,7 +27,6 @@ enum Role {
 }
 
 struct Word {
-    value: String,
     guessed: bool,
     identity: Identity,
 }
@@ -40,7 +41,8 @@ struct Clue {
     number: u8,
 }
 
-type Words = Vec<Word>;
+type Words = HashMap<String, Word>;
+
 type Guesses = u8;
 
 enum GameState {
@@ -59,16 +61,22 @@ impl GameState {
         }
     }
 
-    fn make_guess(self, index: usize) -> Self {
+    fn make_guess(self, guess: String) -> Self {
         match self {
             GameState::Guessing(team, mut words, clue, mut guesses) => {
-                words[index].guessed = true;
-                guesses -= 1;
-                if guesses == 0 {
-                    GameState::WaitingForClue(team.other(), words)
-                } else {
-                    GameState::Guessing(team, words, clue, guesses)
+                let word = words.get_mut(&guess);
+                if let Some(word) = word {
+                    word.guessed = true;
+                    guesses -= 1;
+
+                    if guesses == 0 {
+                        return GameState::WaitingForClue(team.other(), words);
+                    } else {
+                        return GameState::Guessing(team, words, clue, guesses);
+                    }
                 }
+
+                GameState::Guessing(team, words, clue, guesses)
             }
             _ => self,
         }
