@@ -74,7 +74,7 @@ async fn get_game(
     let stream = stream! {
         let games = context.games.read().await;
         let game = games.get(&game_id).unwrap();
-        for _ in 0.. {
+        loop {
             let data = game.read().await.to_string();
             yield Event::default().data(data);
         }
