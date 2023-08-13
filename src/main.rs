@@ -20,6 +20,8 @@ use tokio_stream::StreamExt;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
 
+use crate::routes::{clue::post_clue, guess::post_guess};
+
 pub struct Context {
     games: RwLock<HashMap<Uuid, Arc<RwLock<GameState>>>>,
 }
@@ -48,6 +50,10 @@ async fn main() {
         .route("/game", post(post_game))
         .with_state(context.clone())
         .route("/increment/:id", get(increment_counter))
+        .with_state(context.clone())
+        .route("/guess/:id", post(post_guess))
+        .with_state(context.clone())
+        .route("/clue/:id", post(post_clue))
         .with_state(context.clone());
 
     // run it
@@ -80,14 +86,14 @@ async fn get_game(
         let data = {
             let games = context.games.read().await;
             let game = games.get(&game_id).unwrap();
-            let data = game.read().await.to_string();
-            data
+            let data = game.read().await;
+            format!("{:?}", data)
         };
 
         Some((Event::default().data(data), context))
     })
     .map(Ok)
-    .throttle(Duration::from_secs(1));
+    .throttle(Duration::from_secs(3));
 
     Sse::new(stream).keep_alive(
         axum::response::sse::KeepAlive::new()

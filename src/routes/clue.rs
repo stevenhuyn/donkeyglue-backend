@@ -4,17 +4,18 @@ use axum::{
     extract::{Path, State},
     Json,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::Context;
+use crate::{game::Clue, Context};
 
 #[derive(Clone, Deserialize, Debug)]
 pub struct GuessRequest {
-    guess: String,
+    word: String,
+    number: u8,
 }
 
-pub async fn post_guess(
+pub async fn post_clue(
     State(context): State<Arc<Context>>,
     Path(game_id): Path<Uuid>,
     Json(payload): Json<GuessRequest>,
@@ -22,5 +23,6 @@ pub async fn post_guess(
     let games = context.games.read().await;
     let game = games.get(&game_id).unwrap();
     let mut data = game.write().await;
-    data.make_guess(payload.guess);
+    let clue = Clue::new(payload.word, payload.number);
+    data.provide_clue(clue);
 }

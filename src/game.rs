@@ -1,5 +1,6 @@
 use std::{collections::HashMap, fmt};
 
+#[derive(Clone, Debug)]
 enum Team {
     Red,
     Blue,
@@ -14,6 +15,7 @@ impl Team {
     }
 }
 
+#[derive(Clone, Debug, PartialEq)]
 enum Identity {
     Red,
     Blue,
@@ -21,75 +23,111 @@ enum Identity {
     Neutral,
 }
 
+#[derive(Clone, Debug)]
 enum Role {
     Spymaster,
     Operative,
 }
+
+#[derive(Clone, Debug)]
 
 struct Word {
     guessed: bool,
     identity: Identity,
 }
 
+#[derive(Clone, Debug)]
+
 struct Game {
     current_team: Team,
     words: Vec<Word>,
 }
 
-struct Clue {
+#[derive(Clone, Debug)]
+
+pub struct Clue {
     word: String,
     number: u8,
 }
 
-type Words = HashMap<String, Word>;
+impl Clue {
+    pub fn new(word: String, number: u8) -> Self {
+        Clue { word, number }
+    }
+}
 
-type Guesses = u8;
+#[derive(Clone, Debug)]
 
 struct Human {
     role: Role,
     team: Team,
 }
 
+#[derive(Clone, Debug)]
 pub enum GameState {
-    WaitingForClue(Team, Words),
-    Guessing(Team, Words, Clue, Guesses),
-    GameOver,
-}
-
-impl fmt::Display for GameState {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            GameState::WaitingForClue(_, _) => write!(f, "WaitingForClue"),
-            GameState::Guessing(_, _, _, _) => write!(f, "Guessing"),
-            GameState::GameOver => write!(f, "GameOver"),
-        }
-    }
+    WaitingForClue {
+        team: Team,
+        words: HashMap<String, Word>,
+    },
+    Guessing {
+        team: Team,
+        words: HashMap<String, Word>,
+        clue: Clue,
+        remaining_guesses: u8,
+    },
+    GameOver {
+        winner: Team,
+        words: HashMap<String, Word>,
+    },
 }
 
 impl GameState {
     pub fn new() -> Self {
         let words = HashMap::new();
-        GameState::WaitingForClue(Team::Red, words)
+        GameState::WaitingForClue {
+            team: Team::Red,
+            words,
+        }
     }
 
-    pub fn provide_clue(self, clue: String, number: u8) -> Self {
-        match self {
-            GameState::WaitingForClue(team, words) => {
-                GameState::Guessing(team, words, Clue { word: clue, number }, number)
-            }
-            _ => self,
+    pub fn provide_clue(&mut self, clue: Clue) {
+        if let GameState::WaitingForClue { team, words } = self {
+            *self = GameState::Guessing {
+                team: team.clone(),
+                words: words.clone(),
+                remaining_guesses: clue.number,
+                clue,
+            };
         }
     }
 
     pub fn make_guess(&mut self, guess: String) {
-        if let GameState::Guessing(team, words, clue, guesses) = self {
+        if let GameState::Guessing {
+            team,
+            words,
+            clue: _,
+            remaining_guesses,
+        } = self
+        {
             if let Some(word) = words.get_mut(&guess) {
-                word.guessed = true;
-                *guesses -= 1;
-
-                if *guesses == 0 {
-                    *self = GameState::WaitingForClue(team.other(), *words);
+                if !word.guessed {
+                    word.guessed = true;
+                    *remaining_guesses -= 1;
+                    if word.identity == Identity::Black {
+                        *self = GameState::GameOver {
+                            winner: team.other(),
+                            words: words.clone(),
+                        };
+                        return;
+                    }
                 }
+            }
+
+            if *remaining_guesses == 0 {
+                *self = GameState::WaitingForClue {
+                    team: team.other(),
+                    words: words.clone(),
+                };
             }
         }
     }
