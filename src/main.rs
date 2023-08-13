@@ -74,10 +74,14 @@ async fn get_game(
 
     // TODO: Investigate whether I can pass streams in via context instead of creating here
     let stream = stream::unfold(context, move |context| async move {
-        let games = context.games.read().await;
-        let game = games.get(&game_id).unwrap();
-        let data = game.read().await.to_string();
-        Some((Event::default().data(data), context.clone()))
+        let data = {
+            let games = context.games.read().await;
+            let game = games.get(&game_id).unwrap();
+            let data = game.read().await.to_string();
+            data
+        };
+
+        Some((Event::default().data(data), context))
     })
     .map(Ok)
     .throttle(Duration::from_secs(1));
