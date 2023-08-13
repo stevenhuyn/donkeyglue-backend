@@ -5,21 +5,22 @@
 //! ```
 
 use axum::{
-    extract::{State, TypedHeader},
+    extract::{Path, State, TypedHeader},
     response::sse::{Event, Sse},
-    routing::get,
+    routing::{get, post},
     Router,
 };
 
 use async_stream::stream;
 use futures::stream::Stream;
-use std::{convert::Infallible, net::SocketAddr, sync::Arc, time::Duration};
+use std::{collections::HashMap, convert::Infallible, net::SocketAddr, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
 use tokio_stream::StreamExt;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use uuid::Uuid;
 
 struct Context {
-    counter: RwLock<usize>,
+    games: RwLock<HashMap<Uuid, Arc<RwLock<u32>>>>,
 }
 
 #[tokio::main]
@@ -33,14 +34,16 @@ async fn main() {
         .init();
 
     let context = Arc::new(Context {
-        counter: RwLock::new(0),
+        games: RwLock::new(HashMap::new()),
     });
 
     // build our application with a route
     let app = Router::new()
-        .route("/sse", get(get_counter))
+        .route("/game/:id", get(get_game))
         .with_state(context.clone())
-        .route("/increment", get(increment_counter))
+        .route("/game", post(post_game))
+        .with_state(context.clone())
+        .route("/increment/:id", get(increment_counter))
         .with_state(context.clone());
 
     // run it
@@ -52,15 +55,27 @@ async fn main() {
         .unwrap();
 }
 
-async fn get_counter(
+async fn post_game(State(context): State<Arc<Context>>) -> String {
+    let mut games = context.games.write().await;
+    let uuid = Uuid::new_v4();
+    let new_game = Arc::new(RwLock::new(0));
+    games.entry(uuid).or_insert(new_game);
+    uuid.to_string()
+}
+
+async fn get_game(
+    Path(game_id): Path<Uuid>,
     TypedHeader(user_agent): TypedHeader<headers::UserAgent>,
     State(context): State<Arc<Context>>,
 ) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
     println!("`{}` connected", user_agent.as_str());
 
+    // TODO: Investigate whether I can pass streams in via context instead of creating here
     let stream = stream! {
+        let games = context.games.read().await;
+        let game = games.get(&game_id).unwrap();
         for _ in 0.. {
-            let data = context.counter.read().await.clone().to_string();
+            let data = game.read().await.to_string();
             yield Event::default().data(data);
         }
     }
@@ -74,7 +89,8 @@ async fn get_counter(
     )
 }
 
-async fn increment_counter(State(context): State<Arc<Context>>) {
-    let mut counter = context.counter.write().await;
-    *counter += 1;
+async fn increment_counter(Path(game_id): Path<Uuid>, State(context): State<Arc<Context>>) {
+    let games = context.games.read().await;
+    let game = games.get(&game_id).unwrap();
+    *game.write().await += 1;
 }
