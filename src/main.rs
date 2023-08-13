@@ -12,7 +12,7 @@ use axum::{
 };
 
 use async_stream::stream;
-use futures::stream::Stream;
+use futures::stream::{self, Stream};
 use std::{collections::HashMap, convert::Infallible, net::SocketAddr, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
 use tokio_stream::StreamExt;
@@ -73,14 +73,12 @@ async fn get_game(
     println!("`{}` connected", user_agent.as_str());
 
     // TODO: Investigate whether I can pass streams in via context instead of creating here
-    let stream = stream! {
+    let stream = stream::unfold(context, move |context| async move {
         let games = context.games.read().await;
         let game = games.get(&game_id).unwrap();
-        loop {
-            let data = game.read().await.to_string();
-            yield Event::default().data(data);
-        }
-    }
+        let data = game.read().await.to_string();
+        Some((Event::default().data(data), context.clone()))
+    })
     .map(Ok)
     .throttle(Duration::from_secs(1));
 
