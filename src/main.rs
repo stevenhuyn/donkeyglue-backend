@@ -23,6 +23,8 @@ struct Context {
     games: RwLock<HashMap<Uuid, Arc<RwLock<u32>>>>,
 }
 
+mod game;
+
 #[tokio::main]
 async fn main() {
     tracing_subscriber::registry()
