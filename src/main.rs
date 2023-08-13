@@ -10,6 +10,8 @@ use axum::{
     routing::get,
     Router,
 };
+
+use async_stream::stream;
 use futures::stream::{self, Map, RepeatWith, Stream};
 use std::{convert::Infallible, net::SocketAddr, path::PathBuf, sync::Arc, time::Duration};
 use tokio::{sync::RwLock, time::interval};
@@ -47,9 +49,7 @@ async fn main() {
     // let stream: Throttle<Map<RepeatWith<impl Fn() -> Event>, Ok<Event, Infallible>(Event) -> Result<Event, Infallible>>> =
     //     stream::repeat_with(move || Event::default().data("test")).map(Ok).throttle(Duration::from_secs(1));
 
-    let blah = stream::repeat_with(move || Event::default().data("test"))
-        .map::<Result<Event, Infallible>, fn(Event) -> Result<Event, Infallible>>(Ok)
-        .throttle(Duration::from_secs(1));
+    let blah = stream::repeat_with(move || async { Event::default().data("test") });
 
     // run it
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
@@ -69,9 +69,27 @@ async fn sse_handler(
     // let count = std::sync::RwLock::new(3);
     // let count = tokio::sync::RwLock::new(3);
 
-    let stream = stream::repeat_with(move || Event::default().data("test"))
-        .map(Ok)
-        .throttle(Duration::from_secs(1));
+    // let stream = stream::repeat_with(move || Event::default().data("test"))
+    //     .map(Ok)
+    //     .throttle(Duration::from_secs(1));
+
+    // let counter = Arc::new(RwLock::new(3));
+    // let stream = stream::repeat_with({
+    //     let counter = counter.clone();
+    //     move || async move {
+    //         let read_guard = counter.read().await;
+    //         Ok::<_, Infallible>(*read_guard)
+    //     }
+    // });
+
+    let counter = Arc::new(RwLock::new(3));
+    let stream = stream! {
+        for _ in 0.. {
+            yield Event::default().data(counter.read().await.clone().to_string());
+        }
+    }
+    .map(Ok)
+    .throttle(Duration::from_secs(1));
 
     Sse::new(stream).keep_alive(
         axum::response::sse::KeepAlive::new()
