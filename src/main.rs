@@ -1,29 +1,15 @@
-//! Run with
-//!
-//! ```not_rust
-//! cargo run -p example-sse
-//! ```
+use std::io::BufRead;
+use std::{collections::HashMap, fs::File, io, net::SocketAddr, sync::Arc};
 
 use axum::{
-    extract::{Path, State, TypedHeader},
-    response::sse::{Event, Sse},
     routing::{get, post},
     Router,
 };
-
-use axum_macros::debug_handler;
-use futures::stream::{self, Stream};
-use game::GameState;
-use std::io::BufRead;
-use std::{
-    collections::HashMap, convert::Infallible, fs::File, io, net::SocketAddr, sync::Arc,
-    time::Duration,
-};
 use tokio::sync::RwLock;
-use tokio_stream::StreamExt;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
 
+use crate::game::game_state::GameState;
 use crate::routes::{
     clue::post_clue,
     game::{get_game, post_game},

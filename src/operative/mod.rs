@@ -4,7 +4,7 @@ use llm_chain::traits::Executor as ExecutorTrait;
 use llm_chain::{chains::sequential::Chain, prompt};
 use llm_chain_openai::chatgpt::Executor;
 
-use crate::game::GameState;
+use crate::game::game_state::GameState;
 
 pub struct Operative;
 

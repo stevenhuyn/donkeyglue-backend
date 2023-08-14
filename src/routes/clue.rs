@@ -7,7 +7,7 @@ use axum::{
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::{game::Clue, Context};
+use crate::{game::game_state::Clue, Context};
 
 #[derive(Clone, Deserialize, Debug)]
 pub struct GuessRequest {

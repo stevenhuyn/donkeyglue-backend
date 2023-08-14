@@ -10,13 +10,14 @@ use tokio::sync::RwLock;
 use tokio_stream::StreamExt;
 use uuid::Uuid;
 
-use crate::{game::GameState, Context};
+use crate::{game::game_state::GameState, Context};
 
 pub async fn post_game(State(context): State<Arc<Context>>) -> String {
     let mut games = context.games.write().await;
     let uuid = Uuid::new_v4();
     let new_game = GameState::new(&context.seed_words);
     games.entry(uuid).or_insert(Arc::new(RwLock::new(new_game)));
+
     uuid.to_string()
 }
 
