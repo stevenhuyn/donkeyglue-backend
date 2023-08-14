@@ -1,14 +1,9 @@
-use std::io::BufRead;
-use std::{collections::HashMap, fmt, fs::File, io, path::Path};
-
 use rand::seq::IteratorRandom;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
-use crate::operative::Operative;
-
 #[derive(Clone, Debug)]
-enum Team {
+pub enum Team {
     Red,
     Blue,
 }
@@ -23,33 +18,27 @@ impl Team {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-enum Identity {
+pub enum Identity {
     Red,
     Blue,
     Black,
     Neutral,
+    // Used to send game state to the client
     Hidden,
 }
 
 #[derive(Clone, Debug)]
-enum Role {
+pub enum Role {
     Spymaster,
     Operative,
 }
 
 #[derive(Clone, Debug)]
 
-struct Codename {
+pub struct Codename {
     word: String,
     guessed: bool,
     identity: Identity,
-}
-
-#[derive(Clone, Debug)]
-
-struct Game {
-    current_team: Team,
-    words: Vec<Codename>,
 }
 
 #[derive(Clone, Debug)]

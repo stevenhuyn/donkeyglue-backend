@@ -56,8 +56,6 @@ async fn main() {
         .with_state(context.clone())
         .route("/game", post(post_game))
         .with_state(context.clone())
-        .route("/increment/:id", get(increment_counter))
-        .with_state(context.clone())
         .route("/guess/:id", post(post_guess))
         .with_state(context.clone())
         .route("/clue/:id", post(post_clue))
@@ -114,10 +112,4 @@ async fn get_game(
             .interval(Duration::from_secs(1))
             .text("keep-alive-text"),
     )
-}
-
-async fn increment_counter(Path(game_id): Path<Uuid>, State(context): State<Arc<Context>>) {
-    let games = context.games.read().await;
-    let game = games.get(&game_id).unwrap();
-    // *game.write().await.to_string()
 }
