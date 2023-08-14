@@ -14,7 +14,11 @@ use axum::{
 use axum_macros::debug_handler;
 use futures::stream::{self, Stream};
 use game::GameState;
-use std::{collections::HashMap, convert::Infallible, net::SocketAddr, sync::Arc, time::Duration};
+use std::io::BufRead;
+use std::{
+    collections::HashMap, convert::Infallible, fs::File, io, net::SocketAddr, sync::Arc,
+    time::Duration,
+};
 use tokio::sync::RwLock;
 use tokio_stream::StreamExt;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -24,6 +28,7 @@ use crate::routes::{clue::post_clue, guess::post_guess};
 
 pub struct Context {
     games: RwLock<HashMap<Uuid, Arc<RwLock<GameState>>>>,
+    seed_words: Vec<String>,
 }
 
 mod game;
@@ -42,6 +47,7 @@ async fn main() {
 
     let context = Arc::new(Context {
         games: RwLock::new(HashMap::new()),
+        seed_words: get_seed_words(),
     });
 
     // build our application with a route
@@ -66,11 +72,18 @@ async fn main() {
         .unwrap();
 }
 
-#[debug_handler]
+fn get_seed_words() -> Vec<String> {
+    let path = std::path::Path::new("assets/words.txt");
+    let file = File::open(path).unwrap();
+    let reader = io::BufReader::new(file);
+    let words: Vec<String> = reader.lines().map_while(Result::ok).collect();
+    words
+}
+
 async fn post_game(State(context): State<Arc<Context>>) -> String {
     let mut games = context.games.write().await;
     let uuid = Uuid::new_v4();
-    let new_game = GameState::new();
+    let new_game = GameState::new(&context.seed_words);
     games.entry(uuid).or_insert(Arc::new(RwLock::new(new_game)));
     uuid.to_string()
 }

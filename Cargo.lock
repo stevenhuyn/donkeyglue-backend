@@ -493,6 +493,7 @@ dependencies = [
  "headers",
  "llm-chain",
  "llm-chain-openai",
+ "rand",
  "serde",
  "tokio",
  "tokio-stream",
