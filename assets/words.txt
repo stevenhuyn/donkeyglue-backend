@@ -2,7 +2,6 @@ Achievement
 Actor
 Advancement
 Adventure
-Adventure
 Alarm
 Amazement
 Analysis
@@ -32,7 +31,6 @@ Brain
 Branch
 Breadth
 Breakthrough
-Breakthrough
 Breeze
 Brilliance
 Brilliant
@@ -57,9 +55,7 @@ Clock
 Cloud
 Coconut
 Comedy
-Comedy
 Community
-Compass
 Compass
 Composition
 Concentration
@@ -97,7 +93,6 @@ Defeat
 Democracy
 Descendants
 Design
-Design
 Destination
 Destiny
 Develop
@@ -108,8 +103,6 @@ Dolphin
 Domain
 Dominate
 Drama
-Drama
-Dream
 Dream
 Drum
 Dune
@@ -127,7 +120,6 @@ Evening
 Excitement
 Expansive
 Expedition
-Expedition
 Experience
 Exploration
 Fairness
@@ -141,7 +133,6 @@ Fish
 Flag
 Flame
 Flamingo
-Flash
 Flash
 Flashlight
 Flourish
@@ -159,15 +150,12 @@ Friendship
 Full
 Future
 Galaxy
-Galaxy
 Generation
-Genius
 Genius
 Gift
 Glitter
 Globe
 Glow
-Goal
 Goal
 Gold
 Grow
@@ -188,7 +176,6 @@ Hour
 Hum
 Hypothesis
 Idea
-Idea
 Ideal
 Illumination
 Illusion
@@ -200,8 +187,6 @@ Improvement
 Infinity
 Influence
 Innovation
-Innovation
-Insight
 Insight
 Inspiration
 Instruments
@@ -209,19 +194,14 @@ Integrity
 Intellect
 Intelligent
 Intuition
-Intuition
-Invention
 Invention
 Investigation
 Island
 Jazz
 Journey
-Journey
-Journey
 Joy
 Justice
 Knot
-Knowledge
 Knowledge
 Lagoon
 Landing
@@ -231,7 +211,6 @@ Launch
 Leader
 Leaf
 Learning
-Light
 Light
 Lightning
 Limitless
@@ -246,7 +225,6 @@ Lumber
 Lyrics
 Magic
 Makeup
-Map
 Map
 Mask
 Maze
@@ -266,7 +244,6 @@ Morning
 Mountain
 Music
 Nation
-Navigation
 Navigation
 Nebula
 Neighborhood
@@ -300,7 +277,6 @@ Piano
 Pillow
 Place
 Plan
-Plan
 Planet
 Position
 Potential
@@ -310,8 +286,6 @@ Prize
 Progress
 Prosper
 Purpose
-Purpose
-Quest
 Quest
 Rain
 Rainfall
@@ -364,20 +338,16 @@ Society
 Socks
 Solstice
 Solution
-Solution
 South
-Space
 Space
 Spacecraft
 Spacious
-Spark
 Spark
 Sparkle
 Spring
 Stage
 Stars
 Storm
-Strategy
 Strategy
 Stream
 Study
@@ -402,7 +372,6 @@ Terror
 Theater
 Theory
 Thought
-Thought
 Thrive
 Thunder
 Tick
@@ -417,7 +386,6 @@ Tradition
 Tragedy
 Trail
 Travel
-Travel
 Treasure
 Tree
 Trek
@@ -429,7 +397,6 @@ Tunnel
 Twinkle
 Underground
 Understanding
-Understanding
 Unfathomable
 United
 Universe
@@ -439,8 +406,6 @@ Vicinity
 Victory
 View
 Vision
-Vision
-Voyage
 Voyage
 Wake
 Warmth
