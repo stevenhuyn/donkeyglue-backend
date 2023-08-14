@@ -1,5 +1,7 @@
 use std::{collections::HashMap, fmt};
 
+use crate::operative::Operative;
+
 #[derive(Clone, Debug)]
 enum Team {
     Red,
@@ -103,6 +105,14 @@ impl GameState {
     }
 
     pub fn make_guess(&mut self, guess: String) {
+        let game_state = self.clone();
+        tokio::spawn(async move {
+            tracing::info!("Guess made!!!");
+            let operative = Operative {};
+            let res = operative.guess(game_state).await;
+            tracing::info!("OpenAI response: {}", res);
+        });
+
         if let GameState::Guessing {
             team,
             words,
