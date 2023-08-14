@@ -4,7 +4,7 @@ use axum::{
     extract::{Path, State},
     Json,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::Context;

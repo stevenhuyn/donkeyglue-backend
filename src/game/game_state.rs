@@ -2,6 +2,8 @@ use rand::seq::IteratorRandom;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
+use super::seed_words::SeedWords;
+
 #[derive(Clone, Debug)]
 pub enum Team {
     Red,
@@ -80,13 +82,14 @@ pub enum GameState {
 }
 
 impl GameState {
-    pub fn new(seed_words: &Vec<String>) -> Self {
+    pub fn new(seed_words: &SeedWords) -> Self {
         let mut identities = vec![Identity::Red; 9];
         identities.extend(vec![Identity::Blue; 8]);
         identities.extend(vec![Identity::Neutral; 7]);
         identities.extend(vec![Identity::Black; 1]);
 
-        let mut codenames: Vec<Codename> = Self::get_random_words(seed_words)
+        let mut codenames: Vec<Codename> = seed_words
+            .get_random_words(25)
             .into_iter()
             .zip(identities)
             .map(|(word, identity)| Codename {
@@ -102,13 +105,6 @@ impl GameState {
             team: Team::Red,
             codenames,
         }
-    }
-
-    fn get_random_words(seed_words: &Vec<String>) -> Vec<String> {
-        let random_words = seed_words
-            .iter()
-            .choose_multiple(&mut rand::thread_rng(), 25);
-        random_words.into_iter().cloned().collect()
     }
 
     pub fn provide_clue(&mut self, clue: Clue) {

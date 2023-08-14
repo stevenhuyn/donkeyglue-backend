@@ -10,6 +10,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
 
 use crate::game::game_state::GameState;
+use crate::game::seed_words::SeedWords;
 use crate::routes::{
     clue::post_clue,
     game::{get_game, post_game},
@@ -18,7 +19,7 @@ use crate::routes::{
 
 pub struct Context {
     games: RwLock<HashMap<Uuid, Arc<RwLock<GameState>>>>,
-    seed_words: Vec<String>,
+    seed_words: SeedWords,
 }
 
 mod game;
@@ -37,7 +38,7 @@ async fn main() {
 
     let context = Arc::new(Context {
         games: RwLock::new(HashMap::new()),
-        seed_words: get_seed_words(),
+        seed_words: SeedWords::new(),
     });
 
     // build our application with a route
@@ -58,12 +59,4 @@ async fn main() {
         .serve(app.into_make_service())
         .await
         .unwrap();
-}
-
-fn get_seed_words() -> Vec<String> {
-    let path = std::path::Path::new("assets/words.txt");
-    let file = File::open(path).unwrap();
-    let reader = io::BufReader::new(file);
-    let words: Vec<String> = reader.lines().map_while(Result::ok).collect();
-    words
 }
