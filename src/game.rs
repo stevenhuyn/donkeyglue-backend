@@ -124,7 +124,9 @@ impl GameState {
 
     pub fn provide_clue(&mut self, clue: Clue) {
         if let GameState::WaitingForClue { team, codenames } = self {
-            if !codenames.iter().any(|word| word.word == clue.word) {
+            // Determine if the clue is already a word in the list
+            if codenames.iter().any(|word| word.word == clue.word) {
+                tracing::debug!("Guessed a word already in the list!");
                 return;
             };
 
@@ -138,22 +140,23 @@ impl GameState {
     }
 
     pub fn make_guess(&mut self, guess: String) {
-        let game_state = self.clone();
-        tokio::spawn(async move {
-            tracing::info!("Guess made!!!");
-            let operative = Operative {};
-            let res = operative.guess(game_state).await;
-            tracing::info!("OpenAI response: {}", res);
-        });
+        // let game_state = self.clone();
+        // tokio::spawn(async move {
+        //     tracing::info!("Guess made!!!");
+        //     let operative = Operative {};
+        //     let res = operative.guess(game_state).await;
+        //     tracing::info!("OpenAI response: {}", res);
+        // });
 
         if let GameState::Guessing {
             team,
             codenames,
-            clue,
+            clue: _,
             remaining_guesses,
         } = self
         {
-            if !codenames.iter().any(|word| word.word == clue.word) {
+            if !codenames.iter().any(|codename| codename.word == guess) {
+                tracing::debug!("guess: {guess} not found in codenames!");
                 return;
             };
 
@@ -162,14 +165,21 @@ impl GameState {
                 if !codename.guessed {
                     codename.guessed = true;
                     *remaining_guesses -= 1;
+                } else {
+                    tracing::debug!("Already guessed this word!");
+                    return;
                 }
 
                 if codename.identity == Identity::Black {
+                    tracing::debug!("Selected an assassin!");
+
                     *self = GameState::GameOver {
                         winner: team.other(),
                         codenames: codenames.clone(),
                     };
                 } else if *remaining_guesses == 0 {
+                    tracing::debug!("Guesses over, changing to other team!");
+
                     *self = GameState::WaitingForClue {
                         team: team.other(),
                         codenames: codenames.clone(),
