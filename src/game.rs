@@ -21,6 +21,7 @@ enum Identity {
     Blue,
     Black,
     Neutral,
+    Hidden,
 }
 
 #[derive(Clone, Debug)]

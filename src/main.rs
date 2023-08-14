@@ -27,6 +27,7 @@ pub struct Context {
 }
 
 mod game;
+mod operative;
 mod routes;
 
 #[tokio::main]
