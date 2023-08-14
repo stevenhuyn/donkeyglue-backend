@@ -24,7 +24,11 @@ use tokio_stream::StreamExt;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
 
-use crate::routes::{clue::post_clue, guess::post_guess};
+use crate::routes::{
+    clue::post_clue,
+    game::{get_game, post_game},
+    guess::post_guess,
+};
 
 pub struct Context {
     games: RwLock<HashMap<Uuid, Arc<RwLock<GameState>>>>,
@@ -76,40 +80,4 @@ fn get_seed_words() -> Vec<String> {
     let reader = io::BufReader::new(file);
     let words: Vec<String> = reader.lines().map_while(Result::ok).collect();
     words
-}
-
-async fn post_game(State(context): State<Arc<Context>>) -> String {
-    let mut games = context.games.write().await;
-    let uuid = Uuid::new_v4();
-    let new_game = GameState::new(&context.seed_words);
-    games.entry(uuid).or_insert(Arc::new(RwLock::new(new_game)));
-    uuid.to_string()
-}
-
-async fn get_game(
-    Path(game_id): Path<Uuid>,
-    TypedHeader(user_agent): TypedHeader<headers::UserAgent>,
-    State(context): State<Arc<Context>>,
-) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
-    println!("`{}` connected", user_agent.as_str());
-
-    // TODO: Convert to a tokio::watch::Receiver
-    let stream = stream::unfold(context, move |context| async move {
-        let data = {
-            let games = context.games.read().await;
-            let game = games.get(&game_id).unwrap();
-            let data = game.read().await;
-            format!("{:?}", data)
-        };
-
-        Some((Event::default().data(data), context))
-    })
-    .map(Ok)
-    .throttle(Duration::from_secs(3));
-
-    Sse::new(stream).keep_alive(
-        axum::response::sse::KeepAlive::new()
-            .interval(Duration::from_secs(1))
-            .text("keep-alive-text"),
-    )
 }
