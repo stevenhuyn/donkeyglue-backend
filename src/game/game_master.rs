@@ -4,12 +4,12 @@ use crate::operative::{
 };
 
 use super::{
-    game_state::{Clue, GameState, Role, Team},
+    game_state::{Clue, GameState, Phase, Role, Team},
     seed_words::SeedWords,
 };
 
 struct GameMaster {
-    game_state: GameState,
+    pub game_state: GameState,
     red_spymaster: Box<dyn Spymaster>,
     red_operative: Box<dyn Operative>,
     blue_spymaster: Box<dyn Spymaster>,
@@ -44,29 +44,44 @@ impl GameMaster {
     }
 
     pub async fn step_simulation(&mut self) -> Option<()> {
-        match &self.game_state {
-            GameState::WaitingForClue { team, codenames } => {
-                let spymaster = match team {
-                    Team::Red => &self.red_spymaster,
-                    Team::Blue => &self.blue_spymaster,
-                };
-
-                return spymaster.provide_clue(&self.game_state).await.map(|_| ());
+        match &self.game_state.phase {
+            Phase::RedSpymasterClueing { .. } => {
+                let clue = self.red_spymaster.provide_clue(&self.game_state).await;
+                if let Some(clue) = clue {
+                    self.game_state.provide_clue(clue);
+                    return Some(());
+                } else {
+                    return None;
+                }
             }
-            GameState::Guessing {
-                team,
-                codenames,
-                clue,
-                remaining_guesses,
-            } => {
-                let operative = match team {
-                    Team::Red => &self.red_operative,
-                    Team::Blue => &self.blue_operative,
-                };
-
-                return operative.make_guess(&self.game_state).await.map(|_| ());
+            Phase::BlueSpymasterClueing { .. } => {
+                let clue = self.blue_spymaster.provide_clue(&self.game_state).await;
+                if let Some(clue) = clue {
+                    self.game_state.provide_clue(clue);
+                    return Some(());
+                } else {
+                    return None;
+                }
             }
-            _ => return None,
+            Phase::BlueOperativeChoosing { .. } => {
+                let guess = self.blue_operative.make_guess(&self.game_state).await;
+                if let Some(guess) = guess {
+                    self.game_state.make_guess(guess);
+                    return Some(());
+                } else {
+                    return None;
+                }
+            }
+            Phase::RedOperativeChoosing { .. } => {
+                let guess = self.red_operative.make_guess(&self.game_state).await;
+                if let Some(guess) = guess {
+                    self.game_state.make_guess(guess);
+                    return Some(());
+                } else {
+                    return None;
+                }
+            }
+            Phase::GameOver { .. } => return None,
         }
     }
 

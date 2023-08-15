@@ -3,6 +3,7 @@ use std::fmt::Display;
 use rand::seq::IteratorRandom;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
+use rand::Rng;
 use serde::Serialize;
 
 use crate::operative::openai_operative::OpenaiOperative;
@@ -76,20 +77,19 @@ impl Clue {
 }
 
 #[derive(Clone, Debug)]
-
-struct Human {
-    role: Role,
-    team: Team,
-}
-
-#[derive(Clone, Debug)]
-pub enum GameState {
-    WaitingForClue {
-        team: Team,
+pub enum Phase {
+    RedSpymasterClueing {
         codenames: Vec<Codename>,
     },
-    Guessing {
-        team: Team,
+    RedOperativeChoosing {
+        codenames: Vec<Codename>,
+        clue: Clue,
+        remaining_guesses: u8,
+    },
+    BlueSpymasterClueing {
+        codenames: Vec<Codename>,
+    },
+    BlueOperativeChoosing {
         codenames: Vec<Codename>,
         clue: Clue,
         remaining_guesses: u8,
@@ -98,6 +98,17 @@ pub enum GameState {
         winner: Team,
         codenames: Vec<Codename>,
     },
+}
+#[derive(Clone, Debug)]
+pub struct GameState {
+    pub phase: Phase,
+    history: Vec<Action>,
+}
+
+#[derive(Clone, Debug)]
+pub enum Action {
+    ProvideClue(Clue),
+    MakeGuess(String),
 }
 
 impl GameState {
@@ -120,88 +131,121 @@ impl GameState {
 
         codenames.shuffle(&mut thread_rng());
 
-        GameState::WaitingForClue {
-            team: Team::Red,
-            codenames,
+        let phase = match rand::thread_rng().gen_range(0..2) {
+            0 => Phase::RedSpymasterClueing { codenames },
+            1 => Phase::BlueSpymasterClueing { codenames },
+            // TODO: use .choose() instead of gen_range?
+            _ => unreachable!(),
+        };
+
+        GameState {
+            phase,
+            history: vec![],
         }
     }
 
     pub fn provide_clue(&mut self, clue: Clue) {
-        let game_state = self.clone();
-        tokio::spawn(async move {
-            let operative = OpenaiSpymaster::new();
-            let res = operative.provide_clue(&game_state).await;
-        });
+        match &self.phase {
+            Phase::RedSpymasterClueing { codenames }
+            | Phase::BlueSpymasterClueing { codenames } => {
+                // Determine if the clue is already a word in the list
+                if codenames.iter().any(|word| word.word == clue.word) {
+                    tracing::debug!("Guessed a word already in the list!");
+                    return;
+                };
 
-        if let GameState::WaitingForClue { team, codenames } = self {
-            // Determine if the clue is already a word in the list
-            if codenames.iter().any(|word| word.word == clue.word) {
-                tracing::debug!("Guessed a word already in the list!");
-                return;
-            };
-
-            *self = GameState::Guessing {
-                team: team.clone(),
-                codenames: codenames.clone(),
-                remaining_guesses: clue.number,
-                clue,
-            };
+                match &mut self.phase {
+                    Phase::RedSpymasterClueing { codenames } => {
+                        self.phase = Phase::RedOperativeChoosing {
+                            codenames: codenames.clone(),
+                            remaining_guesses: clue.number,
+                            clue,
+                        };
+                    }
+                    Phase::BlueSpymasterClueing { codenames } => {
+                        self.phase = Phase::BlueOperativeChoosing {
+                            codenames: codenames.clone(),
+                            remaining_guesses: clue.number,
+                            clue,
+                        };
+                    }
+                    _ => unreachable!(),
+                }
+            }
+            _ => {
+                tracing::debug!("Not in the right phase to provide a clue!");
+            }
         }
     }
 
     pub fn make_guess(&mut self, guess: String) {
-        let game_state = self.clone();
-        tokio::spawn(async move {
-            let operative = OpenaiOperative::new();
-            let res = operative.make_guess(&game_state).await;
-        });
+        // let game_state = self.clone();
+        // tokio::spawn(async move {
+        //     let operative = OpenaiOperative::new();
+        //     let res = operative.make_guess(&game_state).await;
+        // });
 
-        if let GameState::Guessing {
-            team,
-            codenames,
-            clue: _,
-            remaining_guesses,
-        } = self
-        {
-            if !codenames.iter().any(|codename| codename.word == guess) {
-                tracing::debug!("guess: {guess} not found in codenames!");
-                return;
-            };
-
-            let codename = codenames.iter_mut().find(|codename| codename.word == guess);
-            if let Some(codename) = codename {
-                if !codename.guessed {
-                    codename.guessed = true;
-                    *remaining_guesses -= 1;
-                } else {
-                    tracing::debug!("Already guessed this word!");
+        match &mut self.phase.clone() {
+            Phase::BlueOperativeChoosing {
+                codenames,
+                remaining_guesses,
+                ..
+            }
+            | Phase::RedOperativeChoosing {
+                codenames,
+                remaining_guesses,
+                ..
+            } => {
+                if !codenames.iter().any(|codename| codename.word == guess) {
+                    tracing::debug!("guess: {guess} not found in codenames!");
                     return;
+                };
+
+                let codename = codenames.iter_mut().find(|codename| codename.word == guess);
+                if let Some(codename) = codename {
+                    if !codename.guessed {
+                        codename.guessed = true;
+                        *remaining_guesses -= 1;
+
+                        match &self.phase.clone() {
+                            Phase::BlueOperativeChoosing { .. } => {
+                                self.history.push(Action::MakeGuess(guess.clone()));
+                            }
+                            Phase::RedOperativeChoosing { .. } => {
+                                self.history.push(Action::MakeGuess(guess.clone()));
+                            }
+                            _ => unreachable!(),
+                        }
+
+                        if *remaining_guesses == 0u8 {
+                            self.phase = match self.phase {
+                                Phase::BlueOperativeChoosing { .. } => Phase::RedSpymasterClueing {
+                                    codenames: codenames.clone(),
+                                },
+                                Phase::RedOperativeChoosing { .. } => Phase::BlueSpymasterClueing {
+                                    codenames: codenames.clone(),
+                                },
+                                _ => unreachable!(),
+                            };
+                        }
+                    } else {
+                        tracing::debug!("Already guessed this word!")
+                    }
                 }
-
-                if codename.identity == Identity::Black {
-                    tracing::debug!("Selected an assassin!");
-
-                    *self = GameState::GameOver {
-                        winner: team.other(),
-                        codenames: codenames.clone(),
-                    };
-                } else if *remaining_guesses == 0 {
-                    tracing::debug!("Guesses over, changing to other team!");
-
-                    *self = GameState::WaitingForClue {
-                        team: team.other(),
-                        codenames: codenames.clone(),
-                    };
-                }
+            }
+            _ => {
+                tracing::debug!("Not in the right phase to make a guess!");
             }
         }
     }
 
     pub fn get_hidden_board(&self) -> Vec<Codename> {
-        let codenames: Vec<Codename> = match self {
-            GameState::WaitingForClue { codenames, .. } => codenames.iter().cloned(),
-            GameState::Guessing { codenames, .. } => codenames.iter().cloned(),
-            GameState::GameOver { codenames, .. } => codenames.iter().cloned(),
+        let codenames: Vec<Codename> = match &self.phase {
+            Phase::RedSpymasterClueing { codenames, .. } => codenames.iter().cloned(),
+            Phase::RedOperativeChoosing { codenames, .. } => codenames.iter().cloned(),
+            Phase::BlueSpymasterClueing { codenames, .. } => codenames.iter().cloned(),
+            Phase::BlueOperativeChoosing { codenames, .. } => codenames.iter().cloned(),
+            Phase::GameOver { codenames, .. } => codenames.iter().cloned(),
         }
         .collect();
 
@@ -219,10 +263,12 @@ impl GameState {
     }
 
     pub fn get_board(&self) -> &Vec<Codename> {
-        match self {
-            GameState::WaitingForClue { codenames, .. } => codenames,
-            GameState::Guessing { codenames, .. } => codenames,
-            GameState::GameOver { codenames, .. } => codenames,
+        match &self.phase {
+            Phase::RedSpymasterClueing { codenames, .. } => codenames,
+            Phase::RedOperativeChoosing { codenames, .. } => codenames,
+            Phase::BlueSpymasterClueing { codenames, .. } => codenames,
+            Phase::BlueOperativeChoosing { codenames, .. } => codenames,
+            Phase::GameOver { codenames, .. } => codenames,
         }
     }
 }
