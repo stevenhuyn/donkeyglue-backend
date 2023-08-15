@@ -5,11 +5,11 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use game::game_master::GameMaster;
 use tokio::sync::RwLock;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
 
+use crate::game::game_state::GameState;
 use crate::game::seed_words::SeedWords;
 use crate::routes::{
     clue::post_clue,
@@ -17,14 +17,14 @@ use crate::routes::{
     guess::post_guess,
 };
 
+pub struct Context {
+    games: RwLock<HashMap<Uuid, Arc<RwLock<GameState>>>>,
+    seed_words: SeedWords,
+}
+
 mod game;
 mod operative;
 mod routes;
-
-pub struct Context {
-    games: RwLock<HashMap<Uuid, Arc<RwLock<GameMaster>>>>,
-    seed_words: SeedWords,
-}
 
 #[tokio::main]
 async fn main() {

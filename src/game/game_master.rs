@@ -8,7 +8,7 @@ use super::{
     seed_words::SeedWords,
 };
 
-pub struct GameMaster {
+struct GameMaster {
     pub game_state: GameState,
     red_spymaster: Box<dyn Spymaster>,
     red_operative: Box<dyn Operative>,
