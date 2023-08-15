@@ -1,22 +1,27 @@
+use crate::operative::{Operative, Player, Spymaster};
+
 use super::{
     game_state::{GameState, Role, Team},
     seed_words::SeedWords,
 };
 
-struct Player {
-    role: Role,
-    team: Team,
-}
-
 struct GameMaster {
     game_state: GameState,
-    player: Player,
+    red_spymaster: Box<dyn Spymaster>,
+    red_operative: Box<dyn Operative>,
+    blue_spymaster: Box<dyn Spymaster>,
+    blue_operative: Box<dyn Operative>,
 }
 
 impl GameMaster {
     pub fn new(seed_words: SeedWords, role: Role, team: Team) -> Self {
         let game_state = GameState::new(&seed_words);
-        let player = Player { role, team };
-        GameMaster { game_state, player }
+        GameMaster {
+            game_state,
+            red_spymaster: Box::new(Player),
+            red_operative: Box::new(Player),
+            blue_spymaster: Box::new(Player),
+            blue_operative: Box::new(Player),
+        }
     }
 }
