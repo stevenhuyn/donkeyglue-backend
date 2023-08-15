@@ -1,6 +1,10 @@
 use rand::seq::IteratorRandom;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
+use serde::Serialize;
+
+use crate::operative::openai::OpenaiOperative;
+use crate::operative::Operative;
 
 use super::seed_words::SeedWords;
 
@@ -19,7 +23,7 @@ impl Team {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub enum Identity {
     Red,
     Blue,
@@ -35,7 +39,7 @@ pub enum Role {
     Operative,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 
 pub struct Codename {
     word: String,
@@ -125,13 +129,13 @@ impl GameState {
     }
 
     pub fn make_guess(&mut self, guess: String) {
-        // let game_state = self.clone();
-        // tokio::spawn(async move {
-        //     tracing::info!("Guess made!!!");
-        //     let operative = Operative {};
-        //     let res = operative.guess(game_state).await;
-        //     tracing::info!("OpenAI response: {}", res);
-        // });
+        let game_state = self.clone();
+        tokio::spawn(async move {
+            tracing::info!("Guess made!!!");
+            let operative = OpenaiOperative;
+            let res = operative.make_guess(&game_state).await;
+            tracing::info!("OpenAI response: {}", res);
+        });
 
         if let GameState::Guessing {
             team,
@@ -173,8 +177,25 @@ impl GameState {
             }
         }
     }
-}
 
-fn all_words_guessed(words: &Vec<Codename>) -> bool {
-    words.iter().all(|word| word.guessed)
+    pub fn get_hidden_board(&self) -> Vec<Codename> {
+        let codenames: Vec<Codename> = match self {
+            GameState::WaitingForClue { codenames, .. } => codenames.iter().cloned(),
+            GameState::Guessing { codenames, .. } => codenames.iter().cloned(),
+            GameState::GameOver { codenames, .. } => codenames.iter().cloned(),
+        }
+        .collect();
+
+        codenames
+            .into_iter()
+            .map(|codename| Codename {
+                word: codename.word,
+                guessed: false,
+                identity: match codename.guessed {
+                    true => codename.identity,
+                    false => Identity::Hidden,
+                },
+            })
+            .collect()
+    }
 }

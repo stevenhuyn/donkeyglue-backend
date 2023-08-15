@@ -24,6 +24,19 @@ You are an agent who distills the guesses from a body of text that discusses of 
 
 Summarize the following into a JSON array of guesses:
 {{text}}
+
+The format of the response should be an array of guesses with justification in order of priority:
+
+```json
+[
+    {
+        "guess": "THE GUESS",
+        "justification": "WHY THE GUESS IS CORRECT",
+        "confidence": "CONFIDENCE IN THE GUESS"
+    },
+    ...
+]
+```
 "#;
 #[async_trait]
 impl Operative for OpenaiOperative {
@@ -39,12 +52,9 @@ impl Operative for OpenaiOperative {
 
         // Run the chain with the provided parameters
         let clue = format!("{:?}", game_state);
+        let board = serde_json::to_string(&game_state.get_hidden_board()).unwrap();
         let res = chain
-            .run(
-                // Create a Parameters object with key-value pairs for the placeholders
-                parameters!("clue" => clue),
-                &exec,
-            )
+            .run(parameters!("board" => board, "clue" => clue), &exec)
             .await
             .unwrap();
 
