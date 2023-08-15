@@ -16,9 +16,6 @@ impl Operative for Player {
 #[async_trait]
 impl Spymaster for Player {
     async fn provide_clue(&self, game_state: &GameState) -> Clue {
-        Clue {
-            word: "".to_string(),
-            number: 0,
-        }
+        Clue::new("".to_string(), 0)
     }
 }

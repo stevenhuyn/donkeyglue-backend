@@ -1,4 +1,4 @@
-use crate::operative::{Operative, Player, Spymaster};
+use crate::operative::{player::Player, Operative, Spymaster};
 
 use super::{
     game_state::{GameState, Role, Team},
