@@ -6,25 +6,27 @@ use async_openai::{
 use async_trait::async_trait;
 use regex::Regex;
 
-use crate::game::game_state::GameState;
+use crate::game::game_state::{GameState, Team};
 
 use super::Operative;
 
 pub struct OpenaiOperative {
     client: Client<OpenAIConfig>,
+    team: Team,
 }
 
 impl OpenaiOperative {
-    pub fn new() -> Self {
-        OpenaiOperative {
+    pub fn new(team: Team) -> Self {
+        Self {
             client: Client::new(),
+            team,
         }
     }
 }
 
 const OPERATIVE_STEP_1: &str = r#"
 You are an expert player of the game Codenames. 
-Currently you are playing as the operative role.
+Currently you are playing as the operative role on the <TEAM> team.
 Discuss your options and what your guesses should be based on the current game board and clue.
 <BOARD>
 <CLUE>
@@ -49,14 +51,16 @@ The format of the response should be an array of guesses with justification in o
 ]
 ```
 "#;
+
 #[async_trait]
 impl Operative for OpenaiOperative {
-    async fn make_guess(&self, game_state: &GameState) -> String {
+    async fn make_guess(&self, game_state: &GameState) -> Option<String> {
         tracing::info!("Openai Operative making guess");
 
         let clue = format!("{:?}", game_state);
         let board = serde_json::to_string(&game_state.get_hidden_board()).unwrap();
         let system_prompt = OPERATIVE_STEP_1
+            .replace("<TEAM>", &self.team.to_string())
             .replace("<BOARD>", &board)
             .replace("<CLUE>", &clue);
 
@@ -130,6 +134,6 @@ impl Operative for OpenaiOperative {
 
         tracing::info!("Openai Operative Guesses: {json_guesses}");
 
-        json_guesses
+        Some(json_guesses)
     }
 }

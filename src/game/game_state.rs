@@ -1,17 +1,32 @@
+use std::fmt::Display;
+
 use rand::seq::IteratorRandom;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use serde::Serialize;
 
-use crate::operative::openai::OpenaiOperative;
+use crate::operative::openai_operative::OpenaiOperative;
+use crate::operative::openai_spymaster::OpenaiSpymaster;
 use crate::operative::Operative;
+use crate::operative::Spymaster;
 
 use super::seed_words::SeedWords;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Team {
     Red,
     Blue,
+}
+
+impl Display for Team {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let team = match self {
+            Team::Red => "Red",
+            Team::Blue => "Blue",
+        };
+
+        write!(f, "{}", team)
+    }
 }
 
 impl Team {
@@ -112,6 +127,12 @@ impl GameState {
     }
 
     pub fn provide_clue(&mut self, clue: Clue) {
+        let game_state = self.clone();
+        tokio::spawn(async move {
+            let operative = OpenaiSpymaster::new();
+            let res = operative.provide_clue(&game_state).await;
+        });
+
         if let GameState::WaitingForClue { team, codenames } = self {
             // Determine if the clue is already a word in the list
             if codenames.iter().any(|word| word.word == clue.word) {
@@ -131,10 +152,8 @@ impl GameState {
     pub fn make_guess(&mut self, guess: String) {
         let game_state = self.clone();
         tokio::spawn(async move {
-            tracing::info!("Guess made!!!");
             let operative = OpenaiOperative::new();
             let res = operative.make_guess(&game_state).await;
-            tracing::info!("OpenAI response: {}", res);
         });
 
         if let GameState::Guessing {
@@ -197,5 +216,13 @@ impl GameState {
                 },
             })
             .collect()
+    }
+
+    pub fn get_board(&self) -> &Vec<Codename> {
+        match self {
+            GameState::WaitingForClue { codenames, .. } => codenames,
+            GameState::Guessing { codenames, .. } => codenames,
+            GameState::GameOver { codenames, .. } => codenames,
+        }
     }
 }

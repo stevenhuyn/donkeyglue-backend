@@ -8,14 +8,14 @@ pub struct Player;
 
 #[async_trait]
 impl Operative for Player {
-    async fn make_guess(&self, game_state: &GameState) -> String {
-        "".to_string()
+    async fn make_guess(&self, game_state: &GameState) -> Option<String> {
+        None
     }
 }
 
 #[async_trait]
 impl Spymaster for Player {
-    async fn provide_clue(&self, game_state: &GameState) -> Clue {
-        Clue::new("".to_string(), 0)
+    async fn provide_clue(&self, game_state: &GameState) -> Option<Clue> {
+        None
     }
 }
