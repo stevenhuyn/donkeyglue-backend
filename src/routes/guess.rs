@@ -21,6 +21,7 @@ pub async fn post_guess(
 ) {
     let games = context.games.read().await;
     let game = games.get(&game_id).unwrap();
-    let mut data = game.write().await;
-    data.make_guess(payload.guess);
+    let game = &mut game.write().await;
+    let simulator = context.simulator.lock().await;
+    simulator.make_guess(game, payload.guess).await;
 }

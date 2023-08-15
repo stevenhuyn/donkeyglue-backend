@@ -4,11 +4,17 @@ use crate::operative::{
 };
 
 use super::{
-    game_state::{Clue, GameState, Phase, Role, Team},
+    game_state::{self, Clue, GameState, Phase, Role, Team},
     seed_words::SeedWords,
 };
 
+enum HumanRole {
+    Spymaster,
+    Operative,
+}
+
 pub struct Simulator {
+    human_role: HumanRole,
     red_spymaster: Box<dyn Spymaster>,
     red_operative: Box<dyn Operative>,
     blue_spymaster: Box<dyn Spymaster>,
@@ -23,7 +29,13 @@ impl Simulator {
                 Role::Operative => (Box::new(OpenaiSpymaster::new(Team::Red)), Box::new(Player)),
             };
 
+        let human_role = match player_role {
+            Role::Spymaster => HumanRole::Spymaster,
+            Role::Operative => HumanRole::Operative,
+        };
+
         Simulator {
+            human_role,
             red_spymaster,
             red_operative,
             blue_spymaster: Box::new(OpenaiSpymaster::new(Team::Blue)),
@@ -31,15 +43,27 @@ impl Simulator {
         }
     }
 
-    pub fn make_guess(&mut self, guess: String) {
-        todo!();
+    pub async fn make_guess(&self, game_state: &mut GameState, guess: String) {
+        if let Phase::RedOperativeChoosing { .. } = game_state.phase {
+            if let HumanRole::Operative = self.human_role {
+                game_state.make_guess(guess);
+            }
+        }
+
+        self.step_until_player(game_state).await;
     }
 
-    pub fn provide_clue(&mut self, clue: Clue) {
-        todo!();
+    pub async fn provide_clue(&self, game_state: &mut GameState, clue: Clue) {
+        if let Phase::RedSpymasterClueing { .. } = game_state.phase {
+            if let HumanRole::Spymaster = self.human_role {
+                game_state.provide_clue(clue);
+            }
+        }
+
+        self.step_until_player(game_state).await;
     }
 
-    pub async fn step_simulation(&mut self, game_state: &mut GameState) -> Option<()> {
+    pub async fn step_simulation(&self, game_state: &mut GameState) -> Option<()> {
         match game_state.phase {
             Phase::RedSpymasterClueing { .. } => {
                 let clue = self.red_spymaster.provide_clue(game_state).await;
@@ -81,7 +105,9 @@ impl Simulator {
         }
     }
 
-    pub async fn step_until_player(&mut self, game_state: &mut GameState) {
-        while self.step_simulation(game_state).await.is_some() {}
+    pub async fn step_until_player(&self, game_state: &mut GameState) {
+        while self.step_simulation(game_state).await.is_some() {
+            tracing::info!("Stepping Simulation!");
+        }
     }
 }

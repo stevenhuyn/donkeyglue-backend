@@ -179,12 +179,6 @@ impl GameState {
     }
 
     pub fn make_guess(&mut self, guess: String) {
-        // let game_state = self.clone();
-        // tokio::spawn(async move {
-        //     let operative = OpenaiOperative::new();
-        //     let res = operative.make_guess(&game_state).await;
-        // });
-
         match &mut self.phase.clone() {
             Phase::BlueOperativeChoosing {
                 codenames,

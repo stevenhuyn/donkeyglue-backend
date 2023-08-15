@@ -32,7 +32,7 @@ async fn main() {
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "example_sse=debug,tower_http=debug".into()),
+                .unwrap_or_else(|_| "donkeyglue=debug,tower_http=debug".into()),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
@@ -42,6 +42,8 @@ async fn main() {
         simulator: Arc::new(Mutex::new(Simulator::new(Role::Spymaster))),
         seed_words: SeedWords::new(),
     });
+
+    tracing::info!("Building app");
 
     // build our application with a route
     let app = Router::new()

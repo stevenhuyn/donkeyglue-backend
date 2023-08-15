@@ -57,6 +57,7 @@ impl Operative for OpenaiOperative {
     async fn make_guess(&self, game_state: &GameState) -> Option<String> {
         tracing::info!("Openai Operative making guess");
 
+        // TODO: Fix this to actually show the clue
         let clue = format!("{:?}", game_state);
         let board = serde_json::to_string(&game_state.get_hidden_board()).unwrap();
         let system_prompt = OPERATIVE_STEP_1

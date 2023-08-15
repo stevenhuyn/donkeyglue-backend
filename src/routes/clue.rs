@@ -4,6 +4,7 @@ use axum::{
     extract::{Path, State},
     Json,
 };
+use axum_macros::debug_handler;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -15,6 +16,7 @@ pub struct GuessRequest {
     number: u8,
 }
 
+#[debug_handler]
 pub async fn post_clue(
     State(context): State<Arc<Context>>,
     Path(game_id): Path<Uuid>,
@@ -22,7 +24,8 @@ pub async fn post_clue(
 ) {
     let games = context.games.read().await;
     let game = games.get(&game_id).unwrap();
-    let mut data = game.write().await;
+    let game = &mut game.write().await;
     let clue = Clue::new(payload.word, payload.number);
-    data.provide_clue(clue);
+    let simulator = context.simulator.lock().await;
+    simulator.provide_clue(game, clue).await;
 }
