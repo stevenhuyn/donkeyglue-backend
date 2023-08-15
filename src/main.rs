@@ -1,15 +1,15 @@
-use std::io::BufRead;
-use std::{collections::HashMap, fs::File, io, net::SocketAddr, sync::Arc};
+use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 
 use axum::{
     routing::{get, post},
     Router,
 };
-use tokio::sync::RwLock;
+use game::simulator::Simulator;
+use tokio::sync::{Mutex, RwLock};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
 
-use crate::game::game_state::GameState;
+use crate::game::game_state::{GameState, Role};
 use crate::game::seed_words::SeedWords;
 use crate::routes::{
     clue::post_clue,
@@ -19,6 +19,7 @@ use crate::routes::{
 
 pub struct Context {
     games: RwLock<HashMap<Uuid, Arc<RwLock<GameState>>>>,
+    simulator: Arc<Mutex<Simulator>>,
     seed_words: SeedWords,
 }
 
@@ -38,6 +39,7 @@ async fn main() {
 
     let context = Arc::new(Context {
         games: RwLock::new(HashMap::new()),
+        simulator: Arc::new(Mutex::new(Simulator::new(Role::Spymaster))),
         seed_words: SeedWords::new(),
     });
 

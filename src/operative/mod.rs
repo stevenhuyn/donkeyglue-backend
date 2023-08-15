@@ -7,11 +7,11 @@ pub mod openai_spymaster;
 pub mod player;
 
 #[async_trait]
-pub trait Operative {
+pub trait Operative: Send {
     async fn make_guess(&self, game_state: &GameState) -> Option<String>;
 }
 
 #[async_trait]
-pub trait Spymaster {
+pub trait Spymaster: Send {
     async fn provide_clue(&self, game_state: &GameState) -> Option<Clue>;
 }
