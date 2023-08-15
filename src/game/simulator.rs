@@ -50,6 +50,7 @@ impl Simulator {
             }
         }
 
+        // TODO: Spawn thread to do this
         self.step_until_player(game_state).await;
     }
 
@@ -60,6 +61,7 @@ impl Simulator {
             }
         }
 
+        // TODO: Spawn thread to do this
         self.step_until_player(game_state).await;
     }
 
