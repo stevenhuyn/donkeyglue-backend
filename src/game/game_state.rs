@@ -132,7 +132,7 @@ impl GameState {
         let game_state = self.clone();
         tokio::spawn(async move {
             tracing::info!("Guess made!!!");
-            let operative = OpenaiOperative;
+            let operative = OpenaiOperative::new();
             let res = operative.make_guess(&game_state).await;
             tracing::info!("OpenAI response: {}", res);
         });
