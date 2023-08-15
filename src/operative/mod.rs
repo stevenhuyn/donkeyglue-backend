@@ -3,6 +3,7 @@ use async_trait::async_trait;
 use crate::game::game_state::{Clue, GameState, Role, Team};
 
 pub mod player;
+pub mod openai;
 
 #[async_trait]
 pub trait Operative {
