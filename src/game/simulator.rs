@@ -111,5 +111,7 @@ impl Simulator {
         while self.step_simulation(game_state).await.is_some() {
             tracing::info!("Stepping Simulation!");
         }
+
+        tracing::info!("STEPPING DONE!");
     }
 }

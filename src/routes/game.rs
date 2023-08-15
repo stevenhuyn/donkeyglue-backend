@@ -33,7 +33,7 @@ pub async fn get_game(
         let games = context_clone.games.read().await;
         let game = games.get(&game_id).unwrap();
         let game = &mut game.write().await;
-        let simulator = context_clone.simulator.lock().await;
+        let simulator = &context_clone.simulator;
         simulator.step_until_player(game).await;
     });
 

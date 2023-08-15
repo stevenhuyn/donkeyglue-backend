@@ -19,7 +19,7 @@ use crate::routes::{
 
 pub struct Context {
     games: RwLock<HashMap<Uuid, Arc<RwLock<GameState>>>>,
-    simulator: Arc<Mutex<Simulator>>,
+    simulator: Arc<Simulator>,
     seed_words: SeedWords,
 }
 
@@ -39,7 +39,7 @@ async fn main() {
 
     let context = Arc::new(Context {
         games: RwLock::new(HashMap::new()),
-        simulator: Arc::new(Mutex::new(Simulator::new(Role::Spymaster))),
+        simulator: Arc::new(Simulator::new(Role::Spymaster)),
         seed_words: SeedWords::new(),
     });
 

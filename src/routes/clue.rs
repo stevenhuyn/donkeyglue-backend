@@ -22,10 +22,12 @@ pub async fn post_clue(
     Path(game_id): Path<Uuid>,
     Json(payload): Json<GuessRequest>,
 ) {
-    let games = context.games.read().await;
-    let game = games.get(&game_id).unwrap();
-    let game = &mut game.write().await;
-    let clue = Clue::new(payload.word, payload.number);
-    let simulator = context.simulator.lock().await;
-    simulator.provide_clue(game, clue).await;
+    tokio::spawn(async move {
+        let games = context.games.read().await;
+        let game = games.get(&game_id).unwrap();
+        let game = &mut game.write().await;
+        let clue = Clue::new(payload.word, payload.number);
+        let simulator = &context.simulator;
+        simulator.provide_clue(game, clue).await;
+    });
 }

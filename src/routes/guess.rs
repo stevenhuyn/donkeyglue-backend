@@ -19,9 +19,11 @@ pub async fn post_guess(
     Path(game_id): Path<Uuid>,
     Json(payload): Json<GuessRequest>,
 ) {
-    let games = context.games.read().await;
-    let game = games.get(&game_id).unwrap();
-    let game = &mut game.write().await;
-    let simulator = context.simulator.lock().await;
-    simulator.make_guess(game, payload.guess).await;
+    tokio::spawn(async move {
+        let games = context.games.read().await;
+        let game = games.get(&game_id).unwrap();
+        let game = &mut game.write().await;
+        let simulator = &context.simulator;
+        simulator.make_guess(game, payload.guess).await;
+    });
 }
