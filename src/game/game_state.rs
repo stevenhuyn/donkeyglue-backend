@@ -148,6 +148,7 @@ impl GameState {
                     return;
                 };
 
+                self.history.push(Action::ProvideClue(clue.clone()));
                 match &mut self.phase {
                     Phase::RedSpymasterClueing { codenames } => {
                         self.phase = Phase::RedOperativeChoosing {
