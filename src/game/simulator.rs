@@ -46,6 +46,7 @@ impl Simulator {
     pub async fn make_guess(&self, game_state: &mut GameState, guess: String) {
         if let Phase::RedOperativeChoosing { .. } = game_state.phase {
             if let HumanRole::Operative = self.human_role {
+                tracing::info!("Simulator - Making Guess");
                 game_state.make_guess(guess);
             }
         }
@@ -57,6 +58,7 @@ impl Simulator {
     pub async fn provide_clue(&self, game_state: &mut GameState, clue: Clue) {
         if let Phase::RedSpymasterClueing { .. } = game_state.phase {
             if let HumanRole::Spymaster = self.human_role {
+                tracing::info!("Simulator - Providing Clue");
                 game_state.provide_clue(clue);
             }
         }
@@ -71,39 +73,39 @@ impl Simulator {
                 let clue = self.red_spymaster.provide_clue(game_state).await;
                 if let Some(clue) = clue {
                     game_state.provide_clue(clue);
-                    return Some(());
+                    Some(())
                 } else {
-                    return None;
+                    None
                 }
             }
             Phase::BlueSpymasterClueing { .. } => {
                 let clue = self.blue_spymaster.provide_clue(game_state).await;
                 if let Some(clue) = clue {
                     game_state.provide_clue(clue);
-                    return Some(());
+                    Some(())
                 } else {
-                    return None;
+                    None
                 }
             }
             Phase::BlueOperativeChoosing { .. } => {
                 let guess = self.blue_operative.make_guess(game_state).await;
                 if let Some(guess) = guess {
                     game_state.make_guess(guess);
-                    return Some(());
+                    Some(())
                 } else {
-                    return None;
+                    None
                 }
             }
             Phase::RedOperativeChoosing { .. } => {
                 let guess = self.red_operative.make_guess(game_state).await;
                 if let Some(guess) = guess {
                     game_state.make_guess(guess);
-                    return Some(());
+                    Some(())
                 } else {
-                    return None;
+                    None
                 }
             }
-            Phase::GameOver { .. } => return None,
+            Phase::GameOver { .. } => None,
         }
     }
 

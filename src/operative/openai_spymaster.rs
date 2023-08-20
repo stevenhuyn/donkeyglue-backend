@@ -5,8 +5,12 @@ use async_openai::{
 };
 use async_trait::async_trait;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 
-use crate::game::game_state::{Clue, GameState, Team};
+use crate::{
+    game::game_state::{Clue, GameState, Team},
+    routes::clue,
+};
 
 use super::Spymaster;
 
@@ -49,6 +53,14 @@ The format of the response should be a JSON object of the following format
 ```
 "#;
 
+#[derive(Deserialize, Serialize)]
+struct OpenaiSpymasterResponse {
+    word: String,
+    number: u8,
+    justification: String,
+    associations: Vec<String>,
+}
+
 #[async_trait]
 impl Spymaster for OpenaiSpymaster {
     async fn provide_clue(&self, game_state: &GameState) -> Option<Clue> {
@@ -59,7 +71,7 @@ impl Spymaster for OpenaiSpymaster {
             .replace("<TEAM>", &self.team.to_string())
             .replace("<BOARD>", &board);
 
-        tracing::info!("Openai Spymaster first prompt: {system_prompt}");
+        // tracing::info!("Openai Spymaster first prompt: {system_prompt}");
 
         let messages = [ChatCompletionRequestMessageArgs::default()
             .role(Role::System)
@@ -69,7 +81,7 @@ impl Spymaster for OpenaiSpymaster {
 
         let request = CreateChatCompletionRequestArgs::default()
             .max_tokens(512u16)
-            .model("gpt-4")
+            .model("gpt-3.5-turbo")
             .messages(messages)
             .build()
             .unwrap();
@@ -85,11 +97,11 @@ impl Spymaster for OpenaiSpymaster {
             .clone()
             .unwrap();
 
-        tracing::debug!("Openai Spymaster response 1: {response_content}");
+        // tracing::debug!("Openai Spymaster response 1: {response_content}");
 
         let system_prompt = OPERATIVE_STEP_2.replace("<CHAIN>", &response_content);
 
-        tracing::info!("Openai Spymaster second prompt: {system_prompt}");
+        // tracing::info!("Openai Spymaster second prompt: {system_prompt}");
 
         let messages = [ChatCompletionRequestMessageArgs::default()
             .role(Role::System)
@@ -99,7 +111,7 @@ impl Spymaster for OpenaiSpymaster {
 
         let request = CreateChatCompletionRequestArgs::default()
             .max_tokens(512u16)
-            .model("gpt-4")
+            .model("gpt-3.5-turbo")
             .messages(messages)
             .build()
             .unwrap();
@@ -127,8 +139,9 @@ impl Spymaster for OpenaiSpymaster {
             .as_str()
             .to_string();
 
-        tracing::info!("Openai Operative Guesses: {json_guesses}");
-
-        Some(Clue::new("".to_string(), 0))
+        let clue: OpenaiSpymasterResponse = serde_json::from_str(&json_guesses).unwrap();
+        let clue = Clue::new(clue.word, clue.number);
+        tracing::info!("Openai Operative Clue: {clue:?}");
+        Some(clue)
     }
 }

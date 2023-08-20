@@ -19,6 +19,8 @@ pub async fn post_guess(
     Path(game_id): Path<Uuid>,
     Json(payload): Json<GuessRequest>,
 ) {
+    tracing::info!("post_guess");
+
     tokio::spawn(async move {
         let games = context.games.read().await;
         let game = games.get(&game_id).unwrap();

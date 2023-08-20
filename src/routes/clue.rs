@@ -22,6 +22,7 @@ pub async fn post_clue(
     Path(game_id): Path<Uuid>,
     Json(payload): Json<GuessRequest>,
 ) {
+    tracing::info!("post_clue");
     tokio::spawn(async move {
         let games = context.games.read().await;
         let game = games.get(&game_id).unwrap();

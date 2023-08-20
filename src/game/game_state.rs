@@ -265,4 +265,12 @@ impl GameState {
             Phase::GameOver { codenames, .. } => codenames,
         }
     }
+
+    pub fn get_clue(&self) -> Option<Clue> {
+        match &self.phase {
+            Phase::RedOperativeChoosing { clue, .. } => Some(clue.clone()),
+            Phase::BlueOperativeChoosing { clue, .. } => Some(clue.clone()),
+            _ => None,
+        }
+    }
 }

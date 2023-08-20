@@ -13,6 +13,8 @@ use uuid::Uuid;
 use crate::{game::game_state::GameState, Context};
 
 pub async fn post_game(State(context): State<Arc<Context>>) -> String {
+    tracing::info!("post_game");
+
     let mut games = context.games.write().await;
     let uuid = Uuid::new_v4();
     let new_game = GameState::new(&context.seed_words);
@@ -26,7 +28,7 @@ pub async fn get_game(
     TypedHeader(user_agent): TypedHeader<headers::UserAgent>,
     State(context): State<Arc<Context>>,
 ) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
-    println!("`{}` connected", user_agent.as_str());
+    tracing::info!("get_game: {:?}", user_agent);
 
     let context_clone = context.clone();
     tokio::spawn(async move {

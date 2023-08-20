@@ -5,6 +5,7 @@ use async_openai::{
 };
 use async_trait::async_trait;
 use regex::Regex;
+use serde::Deserialize;
 
 use crate::game::game_state::{GameState, Team};
 
@@ -45,12 +46,21 @@ The format of the response should be an array of guesses with justification in o
     {
         "guess": "THE GUESS",
         "justification": "WHY THE GUESS IS CORRECT",
-        "confidence": "CONFIDENCE IN THE GUESS"
+        "confidence": [0-1]
     },
     ...
 ]
 ```
 "#;
+
+type OpenaiOperativeResponse = Vec<OpenaiOperativeGuess>;
+
+#[derive(Debug, Clone, Deserialize)]
+struct OpenaiOperativeGuess {
+    guess: String,
+    justification: String,
+    confidence: f32,
+}
 
 #[async_trait]
 impl Operative for OpenaiOperative {
@@ -58,14 +68,15 @@ impl Operative for OpenaiOperative {
         tracing::info!("Openai Operative making guess");
 
         // TODO: Fix this to actually show the clue
-        let clue = format!("{:?}", game_state);
+        let clue = format!("{:?}", game_state.get_clue().unwrap());
         let board = serde_json::to_string(&game_state.get_hidden_board()).unwrap();
+        tracing::info!("Openai Operative making guess: {:?}");
         let system_prompt = OPERATIVE_STEP_1
             .replace("<TEAM>", &self.team.to_string())
             .replace("<BOARD>", &board)
             .replace("<CLUE>", &clue);
 
-        tracing::info!("Openai Operative first prompt: {system_prompt}");
+        // tracing::info!("Openai Operative first prompt: {system_prompt}");
 
         let messages = [ChatCompletionRequestMessageArgs::default()
             .role(Role::System)
@@ -75,7 +86,7 @@ impl Operative for OpenaiOperative {
 
         let request = CreateChatCompletionRequestArgs::default()
             .max_tokens(512u16)
-            .model("gpt-4")
+            .model("gpt-3.5-turbo")
             .messages(messages)
             .build()
             .unwrap();
@@ -91,11 +102,11 @@ impl Operative for OpenaiOperative {
             .clone()
             .unwrap();
 
-        tracing::debug!("Openai Operative response 1: {response_content}");
+        // tracing::debug!("Openai Operative response 1: {response_content}");
 
         let system_prompt = OPERATIVE_STEP_2.replace("<CHAIN>", &response_content);
 
-        tracing::info!("Openai Operative second prompt: {system_prompt}");
+        // tracing::info!("Openai Operative second prompt: {system_prompt}");
 
         let messages = [ChatCompletionRequestMessageArgs::default()
             .role(Role::System)
@@ -105,7 +116,7 @@ impl Operative for OpenaiOperative {
 
         let request = CreateChatCompletionRequestArgs::default()
             .max_tokens(512u16)
-            .model("gpt-4")
+            .model("gpt-3.5-turbo")
             .messages(messages)
             .build()
             .unwrap();
@@ -121,7 +132,7 @@ impl Operative for OpenaiOperative {
             .clone()
             .unwrap();
 
-        tracing::info!("Openai Operative second 2: {system_prompt}");
+        // tracing::info!("Openai Operative second 2: {system_prompt}");
 
         let re = Regex::new(r"\[[^\]]*\]").unwrap();
 
@@ -133,8 +144,12 @@ impl Operative for OpenaiOperative {
             .as_str()
             .to_string();
 
-        tracing::info!("Openai Operative Guesses: {json_guesses}");
+        // tracing::info!("Openai Operative Guesses: {json_guesses}");
 
-        Some(json_guesses)
+        let guesses = serde_json::from_str::<OpenaiOperativeResponse>(&json_guesses).unwrap();
+        // let guesses = guesses.iter().map(|guess| guess.guess).collect();
+
+        // TODO: Handle multiple guesses
+        Some(guesses.iter().next().unwrap().guess.clone())
     }
 }
