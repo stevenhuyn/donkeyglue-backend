@@ -7,10 +7,7 @@ use async_trait::async_trait;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    game::game_state::{Clue, GameState, Team},
-    routes::clue,
-};
+use crate::game::game_state::{Clue, GameState, Team};
 
 use super::Spymaster;
 

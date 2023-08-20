@@ -1,15 +1,9 @@
 use std::fmt::Display;
 
-use rand::seq::IteratorRandom;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use rand::Rng;
 use serde::Serialize;
-
-use crate::operative::openai_operative::OpenaiOperative;
-use crate::operative::openai_spymaster::OpenaiSpymaster;
-use crate::operative::Operative;
-use crate::operative::Spymaster;
 
 use super::seed_words::SeedWords;
 

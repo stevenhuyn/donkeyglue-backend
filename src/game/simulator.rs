@@ -3,10 +3,7 @@ use crate::operative::{
     Operative, Spymaster,
 };
 
-use super::{
-    game_state::{self, Clue, GameState, Phase, Role, Team},
-    seed_words::SeedWords,
-};
+use super::game_state::{Clue, GameState, Phase, Role, Team};
 
 enum HumanRole {
     Spymaster,
