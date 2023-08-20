@@ -69,7 +69,6 @@ impl Operative for OpenaiOperative {
 
         let clue = format!("{:?}", game_state.get_clue().unwrap());
         let board = serde_json::to_string(&game_state.get_hidden_board()).unwrap();
-        tracing::info!("Openai Operative making guess");
         let system_prompt = OPERATIVE_STEP_1
             .replace("<TEAM>", &self.team.to_string())
             .replace("<BOARD>", &board)
@@ -85,7 +84,7 @@ impl Operative for OpenaiOperative {
 
         let request = CreateChatCompletionRequestArgs::default()
             .max_tokens(512u16)
-            .model("gpt-3.5-turbo")
+            .model("gpt-4")
             .messages(messages)
             .build()
             .unwrap();
@@ -149,6 +148,8 @@ impl Operative for OpenaiOperative {
         // let guesses = guesses.iter().map(|guess| guess.guess).collect();
 
         // TODO: Handle multiple guesses
-        Some(guesses.iter().next().unwrap().guess.clone())
+        let guess = guesses.first().unwrap().guess.clone();
+        tracing::debug!("Guess: {:?}", guess);
+        Some(guess)
     }
 }

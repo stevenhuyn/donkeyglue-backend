@@ -200,16 +200,9 @@ impl GameState {
                     if !codename.guessed {
                         codename.guessed = true;
                         *remaining_guesses -= 1;
-
-                        match &self.phase.clone() {
-                            Phase::BlueOperativeChoosing { .. } => {
-                                self.history.push(Action::MakeGuess(guess.clone()));
-                            }
-                            Phase::RedOperativeChoosing { .. } => {
-                                self.history.push(Action::MakeGuess(guess.clone()));
-                            }
-                            _ => unreachable!(),
-                        }
+                        tracing::debug!(
+                            "Successfully guessed {guess}! {remaining_guesses} guesses remaining."
+                        );
 
                         if *remaining_guesses == 0u8 {
                             self.phase = match self.phase {
@@ -221,6 +214,19 @@ impl GameState {
                                 },
                                 _ => unreachable!(),
                             };
+                        } else {
+                            match &self.phase.clone() {
+                                Phase::BlueOperativeChoosing { .. }
+                                | Phase::RedOperativeChoosing { .. } => {
+                                    self.phase = Phase::BlueOperativeChoosing {
+                                        codenames: codenames.clone(),
+                                        remaining_guesses: *remaining_guesses,
+                                        clue: self.get_clue().unwrap(),
+                                    };
+                                    self.history.push(Action::MakeGuess(guess.clone()));
+                                }
+                                _ => unreachable!(),
+                            }
                         }
                     } else {
                         tracing::debug!("Already guessed this word!")

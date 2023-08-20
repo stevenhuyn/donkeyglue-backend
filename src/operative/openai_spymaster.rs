@@ -81,7 +81,7 @@ impl Spymaster for OpenaiSpymaster {
 
         let request = CreateChatCompletionRequestArgs::default()
             .max_tokens(512u16)
-            .model("gpt-3.5-turbo")
+            .model("gpt-4")
             .messages(messages)
             .build()
             .unwrap();
