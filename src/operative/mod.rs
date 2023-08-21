@@ -8,7 +8,7 @@ pub mod player;
 
 #[async_trait]
 pub trait Operative: Send + Sync {
-    async fn make_guess(&self, game_state: &GameState) -> Option<String>;
+    async fn make_guesses(&self, game_state: &GameState) -> Option<Vec<String>>;
 }
 
 #[async_trait]

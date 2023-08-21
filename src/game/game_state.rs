@@ -234,6 +234,10 @@ impl GameState {
         }
     }
 
+    pub fn reveal_identity(&mut self, word: String) {
+        todo!();
+    }
+
     pub fn get_hidden_board(&self) -> Vec<Codename> {
         let codenames: Vec<Codename> = match &self.phase {
             Phase::RedSpymasterClueing { codenames, .. } => codenames.iter().cloned(),

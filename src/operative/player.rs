@@ -8,7 +8,7 @@ pub struct Player;
 
 #[async_trait]
 impl Operative for Player {
-    async fn make_guess(&self, _game_state: &GameState) -> Option<String> {
+    async fn make_guesses(&self, _game_state: &GameState) -> Option<Vec<String>> {
         None
     }
 }

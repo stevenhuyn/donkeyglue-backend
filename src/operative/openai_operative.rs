@@ -64,7 +64,7 @@ struct OpenaiOperativeGuess {
 
 #[async_trait]
 impl Operative for OpenaiOperative {
-    async fn make_guess(&self, game_state: &GameState) -> Option<String> {
+    async fn make_guesses(&self, game_state: &GameState) -> Option<Vec<String>> {
         tracing::info!("Openai Operative making guess");
 
         let clue = format!("{:?}", game_state.get_clue().unwrap());
@@ -144,12 +144,13 @@ impl Operative for OpenaiOperative {
 
         // tracing::info!("Openai Operative Guesses: {json_guesses}");
 
-        let guesses = serde_json::from_str::<OpenaiOperativeResponse>(&json_guesses).unwrap();
-        // let guesses = guesses.iter().map(|guess| guess.guess).collect();
+        let guesses = serde_json::from_str::<OpenaiOperativeResponse>(&json_guesses)
+            .unwrap()
+            .into_iter()
+            .map(|guess| guess.guess)
+            .collect();
 
-        // TODO: Handle multiple guesses
-        let guess = guesses.first().unwrap().guess.clone();
-        tracing::debug!("Guess: {:?}", guess);
-        Some(guess)
+        tracing::debug!("Guess: {:?}", guesses);
+        Some(guesses)
     }
 }

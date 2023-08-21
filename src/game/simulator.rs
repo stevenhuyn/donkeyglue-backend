@@ -85,18 +85,23 @@ impl Simulator {
                 }
             }
             Phase::BlueOperativeChoosing { .. } => {
-                let guess = self.blue_operative.make_guess(game_state).await;
-                if let Some(guess) = guess {
-                    game_state.make_guess(guess);
+                let guesses = self.blue_operative.make_guesses(game_state).await;
+                if let Some(guesses) = guesses {
+                    for guess in guesses {
+                        game_state.make_guess(guess);
+                    }
                     Some(())
                 } else {
                     None
                 }
             }
             Phase::RedOperativeChoosing { .. } => {
-                let guess = self.red_operative.make_guess(game_state).await;
-                if let Some(guess) = guess {
-                    game_state.make_guess(guess);
+                let guesses = self.red_operative.make_guesses(game_state).await;
+                if let Some(guesses) = guesses {
+                    for guess in guesses {
+                        game_state.make_guess(guess);
+                    }
+
                     Some(())
                 } else {
                     None
