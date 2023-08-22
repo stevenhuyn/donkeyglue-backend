@@ -1,3 +1,4 @@
+#[derive(Clone, Debug)]
 enum Identity {
     Red,
     Blue,
@@ -5,6 +6,7 @@ enum Identity {
     Assassin,
 }
 
+#[derive(Clone, Debug)]
 struct Card {
     word: String,
     guessed: bool,
@@ -22,6 +24,7 @@ impl Card {
 }
 
 /// Legal moves only
+#[derive(Clone, Debug)]
 pub struct GameState {
     cards: Vec<Card>,
 }

@@ -11,7 +11,7 @@ pub struct GetRootResponse {
 }
 
 pub async fn get_root(
-    State(_context): State<Arc<GameEnvironment>>,
+    State(_game_env): State<Arc<GameEnvironment>>,
 ) -> Result<Json<GetRootResponse>, AppError> {
     let response = GetRootResponse {
         message: "Pong".to_string(),

@@ -1,24 +1,67 @@
-use std::sync::Arc;
+use std::{convert::Infallible, sync::Arc, time::Duration};
 
-use axum::extract::State;
+use anyhow::{anyhow, Result};
+use axum::{
+    extract::{Path, State},
+    response::{sse::Event, Sse},
+    Json, TypedHeader,
+};
+use axum_macros::debug_handler;
+use futures::Stream;
+use serde::Serialize;
 use tokio::sync::RwLock;
+use tokio_stream::{wrappers::WatchStream, StreamExt};
 use uuid::Uuid;
 
-use crate::{game::game_controller::GameController, GameEnvironment};
+use crate::{app_error::AppError, game::game_controller::GameController, GameEnvironment};
 
-pub async fn post_game(State(game_env): State<Arc<GameEnvironment>>) -> String {
+#[derive(Serialize, Debug)]
+pub struct PostGameResponse {
+    game_id: Uuid,
+}
+
+#[debug_handler]
+pub async fn post_game(
+    State(game_env): State<Arc<GameEnvironment>>,
+) -> Result<Json<PostGameResponse>, AppError> {
     tracing::info!("post_game");
 
     let uuid = Uuid::new_v4();
     let words = game_env.word_bank.get_word_set(25);
-    let game_controller = GameController::new(words);
+    let controller = GameController::new(words);
 
     {
-        let mut game_controllers = game_env.game_controllers.write().await;
-        game_controllers
+        let mut controllers = game_env.controllers.write().await;
+        controllers
             .entry(uuid)
-            .or_insert(Arc::new(RwLock::new(game_controller)));
+            .or_insert(Arc::new(RwLock::new(controller)));
     }
 
-    uuid.to_string()
+    Ok(Json(PostGameResponse { game_id: uuid }))
+}
+
+pub async fn get_game(
+    Path(game_id): Path<Uuid>,
+    TypedHeader(user_agent): TypedHeader<headers::UserAgent>,
+    State(game_env): State<Arc<GameEnvironment>>,
+) -> Result<Sse<impl Stream<Item = Result<Event, Infallible>>>, AppError> {
+    tracing::info!("get_game: {:?}", user_agent);
+
+    let controllers = game_env.controllers.read().await;
+    if let Some(controller) = controllers.get(&game_id) {
+        let receiver = controller.read().await.get_sender().subscribe();
+        let stream_receiver = WatchStream::new(receiver);
+
+        let stream = stream_receiver
+            .map(|game_state| Ok(Event::default().data(format!("{:?}", game_state))))
+            .throttle(Duration::from_secs(3));
+
+        return Ok(Sse::new(stream).keep_alive(
+            axum::response::sse::KeepAlive::new()
+                .interval(Duration::from_secs(1))
+                .text("keep-alive-text"),
+        ));
+    }
+
+    Err(AppError(anyhow!("Could not find the game")))
 }

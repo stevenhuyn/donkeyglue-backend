@@ -9,14 +9,17 @@ use tokio::sync::RwLock;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
 
-use crate::routes::{game::post_game, root::get_root};
+use crate::routes::{
+    game::{get_game, post_game},
+    root::get_root,
+};
 
 mod app_error;
 mod game;
 mod routes;
 
 pub struct GameEnvironment {
-    game_controllers: RwLock<HashMap<Uuid, Arc<RwLock<GameController>>>>,
+    controllers: RwLock<HashMap<Uuid, Arc<RwLock<GameController>>>>,
     word_bank: WordBank,
 }
 
@@ -31,7 +34,7 @@ async fn main() {
         .init();
 
     let game_env = Arc::new(GameEnvironment {
-        game_controllers: RwLock::new(HashMap::new()),
+        controllers: RwLock::new(HashMap::new()),
         word_bank: WordBank::new(),
     });
 
@@ -42,6 +45,8 @@ async fn main() {
         .route("/", get(get_root))
         .with_state(game_env.clone())
         .route("/game", post(post_game))
+        .with_state(game_env.clone())
+        .route("/game/:id", get(get_game))
         .with_state(game_env.clone());
 
     // run it
