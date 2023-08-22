@@ -3,7 +3,7 @@ use std::sync::Arc;
 use axum::{extract::State, Json};
 use serde::Serialize;
 
-use crate::{app_error::AppError, Context};
+use crate::{app_error::AppError, GameEnvironment};
 
 #[derive(Clone, Serialize, Debug)]
 pub struct GetRootResponse {
@@ -11,7 +11,7 @@ pub struct GetRootResponse {
 }
 
 pub async fn get_root(
-    State(_context): State<Arc<Context>>,
+    State(_context): State<Arc<GameEnvironment>>,
 ) -> Result<Json<GetRootResponse>, AppError> {
     let response = GetRootResponse {
         message: "Pong".to_string(),

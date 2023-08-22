@@ -1,14 +1,24 @@
-use std::{net::SocketAddr, sync::Arc};
+use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 
-use axum::{routing::get, Router};
+use axum::{
+    routing::{get, post},
+    Router,
+};
+use game::{game_controller::GameController, word_bank::WordBank};
+use tokio::sync::RwLock;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
+use uuid::Uuid;
 
-use crate::routes::root::get_root;
+use crate::routes::{game::post_game, root::get_root};
 
 mod app_error;
+mod game;
 mod routes;
 
-pub struct Context {}
+pub struct GameEnvironment {
+    game_controllers: RwLock<HashMap<Uuid, Arc<RwLock<GameController>>>>,
+    word_bank: WordBank,
+}
 
 #[tokio::main]
 async fn main() {
@@ -20,14 +30,19 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let context = Arc::new(Context {});
+    let game_env = Arc::new(GameEnvironment {
+        game_controllers: RwLock::new(HashMap::new()),
+        word_bank: WordBank::new(),
+    });
 
     tracing::info!("Building app");
 
     // build our application with a route
     let app = Router::new()
         .route("/", get(get_root))
-        .with_state(context.clone());
+        .with_state(game_env.clone())
+        .route("/game", post(post_game))
+        .with_state(game_env.clone());
 
     // run it
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
