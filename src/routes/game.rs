@@ -6,8 +6,8 @@ use axum::{
     TypedHeader,
 };
 use futures::{stream, Stream};
-use tokio::sync::RwLock;
-use tokio_stream::StreamExt;
+use tokio::sync::{watch, RwLock};
+use tokio_stream::{wrappers::WatchStream, StreamExt};
 use uuid::Uuid;
 
 use crate::{game::game_state::GameState, Context};
@@ -18,7 +18,13 @@ pub async fn post_game(State(context): State<Arc<Context>>) -> String {
     let mut games = context.games.write().await;
     let uuid = Uuid::new_v4();
     let new_game = GameState::new(&context.seed_words);
-    games.entry(uuid).or_insert(Arc::new(RwLock::new(new_game)));
+    games
+        .entry(uuid)
+        .or_insert(Arc::new(RwLock::new(new_game.clone())));
+
+    let (sender, _receiver1) = watch::channel(new_game.clone());
+    let mut publishers = context.publishers.write().await;
+    publishers.entry(uuid).or_insert(sender);
 
     uuid.to_string()
 }
@@ -39,19 +45,14 @@ pub async fn get_game(
         simulator.step_until_player(game).await;
     });
 
-    // TODO: Convert to a tokio::watch::Receiver
-    let stream = stream::unfold(context, move |context| async move {
-        let data = {
-            let games = context.games.read().await;
-            let game = games.get(&game_id).unwrap();
-            let data = game.read().await;
-            format!("{:?}", data)
-        };
+    let publishers = context.publishers.read().await;
+    let publisher = publishers.get(&game_id).unwrap();
+    let receiver = publisher.subscribe();
+    let stream_receiver = WatchStream::new(receiver);
 
-        Some((Event::default().data(data), context))
-    })
-    .map(Ok)
-    .throttle(Duration::from_secs(3));
+    let stream = stream_receiver
+        .map(|game_state| Ok(Event::default().data(format!("{:?}", game_state))))
+        .throttle(Duration::from_secs(3));
 
     Sse::new(stream).keep_alive(
         axum::response::sse::KeepAlive::new()
