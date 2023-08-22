@@ -26,18 +26,18 @@ pub async fn post_game(
 ) -> Result<Json<PostGameResponse>, AppError> {
     tracing::info!("post_game");
 
-    let uuid = Uuid::new_v4();
+    let game_id = Uuid::new_v4();
     let words = game_env.word_bank.get_word_set(25);
     let controller = GameController::new(words);
 
     {
         let mut controllers = game_env.controllers.write().await;
         controllers
-            .entry(uuid)
+            .entry(game_id)
             .or_insert(Arc::new(RwLock::new(controller)));
     }
 
-    Ok(Json(PostGameResponse { game_id: uuid }))
+    Ok(Json(PostGameResponse { game_id }))
 }
 
 pub async fn get_game(
