@@ -105,17 +105,20 @@ pub enum Action {
     MakeGuess(String),
 }
 
+#[rustfmt::skip]
+const IDENTITIES_ARRAY: [Identity; 25] = [
+    Identity::Red, Identity::Red, Identity::Red, Identity::Red, Identity::Red, Identity::Red, Identity::Red, Identity::Red, Identity::Red, 
+    Identity::Blue, Identity::Blue, Identity::Blue, Identity::Blue, Identity::Blue, Identity::Blue, Identity::Blue, Identity::Blue, 
+    Identity::Neutral, Identity::Neutral, Identity::Neutral, Identity::Neutral, Identity::Neutral, Identity::Neutral, Identity::Neutral, 
+    Identity::Black,
+];
+
 impl GameState {
     pub fn new(seed_words: &SeedWords) -> Self {
-        let mut identities = vec![Identity::Red; 9];
-        identities.extend(vec![Identity::Blue; 8]);
-        identities.extend(vec![Identity::Neutral; 7]);
-        identities.extend(vec![Identity::Black; 1]);
-
         let mut codenames: Vec<Codename> = seed_words
             .get_random_words(25)
             .into_iter()
-            .zip(identities)
+            .zip(IDENTITIES_ARRAY)
             .map(|(word, identity)| Codename {
                 word,
                 identity,
