@@ -12,6 +12,7 @@ use uuid::Uuid;
 
 use crate::routes::{
     game::{get_game, post_game},
+    guess::post_guess,
     root::get_root,
 };
 
@@ -46,6 +47,8 @@ async fn main() {
         .route("/game", post(post_game))
         .with_state(game_env.clone())
         .route("/game/:id", get(get_game))
+        .with_state(game_env.clone())
+        .route("/guess/:id", post(post_guess))
         .with_state(game_env.clone());
 
     // run it
