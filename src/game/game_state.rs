@@ -38,6 +38,15 @@ pub enum Team {
     Blue,
 }
 
+impl Team {
+    pub fn other(&self) -> Self {
+        match self {
+            Team::Red => Team::Blue,
+            Team::Blue => Team::Red,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub enum Phase {
     Clue(Team),
@@ -88,45 +97,13 @@ impl GameState {
             .collect();
         let phase = Phase::Clue(Team::Red);
 
-        let mut game_state = GameState { cards, phase };
-        tracing::debug!("{:?}", game_state.phase);
-
-        let _ = game_state.provide_clue(Clue {
-            word: "test".to_string(),
-            count: 1,
-            remaining: 3,
-        });
-        tracing::debug!("{:?}", game_state.phase);
-
-        let _ = game_state.provide_clue(Clue {
-            word: "test".to_string(),
-            count: 1,
-            remaining: 1,
-        });
-        tracing::debug!("{:?}", game_state.phase);
-
-        let _ = game_state.make_guess("bruh1".to_string());
-        tracing::debug!("{:?}", game_state.phase);
-        let _ = game_state.make_guess("bruh2".to_string());
-        tracing::debug!("{:?}", game_state.phase);
-
-        let _ = game_state.make_guess("bruh3".to_string());
-        tracing::debug!("{:?}", game_state.phase);
-
-        let _ = game_state.make_guess("bruh4".to_string());
-        tracing::debug!("{:?}", game_state.phase);
-
-        game_state
+        GameState { cards, phase }
     }
 
     pub fn provide_clue(&mut self, clue: Clue) -> Result<()> {
-        match self.phase {
-            Phase::Clue(Team::Red) => {
-                self.phase = Phase::Guess(Team::Red, clue);
-                Ok(())
-            }
-            Phase::Clue(Team::Blue) => {
-                self.phase = Phase::Guess(Team::Blue, clue);
+        match &self.phase {
+            Phase::Clue(team) => {
+                self.phase = Phase::Guess(team.other(), clue);
                 Ok(())
             }
             _ => Err(anyhow::anyhow!("Wrong phase")),
