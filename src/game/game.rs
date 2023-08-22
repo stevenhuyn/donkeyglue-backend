@@ -1,25 +1,33 @@
+use tokio::sync::watch;
+
 use crate::operative::{
     openai_operative::OpenaiOperative, openai_spymaster::OpenaiSpymaster, player::Player,
     Operative, Spymaster,
 };
+use anyhow::{bail, Result};
 
-use super::game_state::{Clue, GameState, Phase, Role, Team};
+use super::{
+    game_state::{Clue, GameState, Phase, Role, Team},
+    seed_words::SeedWords,
+};
 
 enum HumanRole {
     Spymaster,
     Operative,
 }
 
-pub struct Simulator {
+pub struct Game {
     human_role: HumanRole,
     red_spymaster: Box<dyn Spymaster>,
     red_operative: Box<dyn Operative>,
     blue_spymaster: Box<dyn Spymaster>,
     blue_operative: Box<dyn Operative>,
+    game_state: GameState,
+    sender: watch::Sender<GameState>,
 }
 
-impl Simulator {
-    pub fn new(player_role: Role) -> Self {
+impl Game {
+    pub fn new(player_role: Role, seed_words: &SeedWords) -> Self {
         let (red_spymaster, red_operative): (Box<dyn Spymaster>, Box<dyn Operative>) =
             match player_role {
                 Role::Spymaster => (Box::new(Player), Box::new(OpenaiOperative::new(Team::Red))),
@@ -31,37 +39,46 @@ impl Simulator {
             Role::Operative => HumanRole::Operative,
         };
 
-        Simulator {
+        let game_state = GameState::new(seed_words);
+        let (sender, _receiver) = watch::channel(game_state);
+
+        Game {
             human_role,
             red_spymaster,
             red_operative,
             blue_spymaster: Box::new(OpenaiSpymaster::new(Team::Blue)),
             blue_operative: Box::new(OpenaiOperative::new(Team::Blue)),
+            game_state,
+            sender,
         }
     }
 
-    pub async fn make_guess(&self, game_state: &mut GameState, guess: String) {
+    /// Make a guess, usually from a player
+    pub async fn make_guess(&self, game_state: &mut GameState, guess: String) -> Result<()> {
         if let Phase::RedOperativeChoosing { .. } = game_state.phase {
             if let HumanRole::Operative = self.human_role {
                 tracing::info!("Simulator - Making Guess");
                 game_state.make_guess(guess);
+                self.step_until_player(game_state).await;
+                return Ok(());
             }
         }
 
-        // TODO: Spawn thread to do this
-        self.step_until_player(game_state).await;
+        bail!("Tried to make guess in incorrect phase")
     }
 
-    pub async fn provide_clue(&self, game_state: &mut GameState, clue: Clue) {
+    /// Provide a clue, usually from a player
+    pub async fn provide_clue(&self, game_state: &mut GameState, clue: Clue) -> Result<()> {
         if let Phase::RedSpymasterClueing { .. } = game_state.phase {
             if let HumanRole::Spymaster = self.human_role {
                 tracing::info!("Simulator - Providing Clue");
                 game_state.provide_clue(clue);
+                self.step_until_player(game_state).await;
+                return Ok(());
             }
         }
 
-        // TODO: Spawn thread to do this
-        self.step_until_player(game_state).await;
+        bail!("Tried to provide clue in incorrect phase")
     }
 
     pub async fn step_simulation(&self, game_state: &mut GameState) -> Option<()> {
@@ -117,5 +134,9 @@ impl Simulator {
         }
 
         tracing::info!("STEPPING DONE!");
+    }
+
+    pub fn get_sender(&self) -> watch::Sender<GameState> {
+        self.sender
     }
 }

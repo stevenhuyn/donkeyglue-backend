@@ -4,7 +4,7 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use game::simulator::Simulator;
+use game::game::Game;
 use tokio::sync::{watch, Mutex, RwLock};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
@@ -18,9 +18,7 @@ use crate::routes::{
 };
 
 pub struct Context {
-    games: RwLock<HashMap<Uuid, Arc<RwLock<GameState>>>>,
-    publishers: RwLock<HashMap<Uuid, watch::Sender<GameState>>>,
-    simulator: Arc<Simulator>,
+    games: RwLock<HashMap<Uuid, Arc<RwLock<Game>>>>,
     seed_words: SeedWords,
 }
 
@@ -40,8 +38,6 @@ async fn main() {
 
     let context = Arc::new(Context {
         games: RwLock::new(HashMap::new()),
-        publishers: RwLock::new(HashMap::new()),
-        simulator: Arc::new(Simulator::new(Role::Spymaster)),
         seed_words: SeedWords::new(),
     });
 

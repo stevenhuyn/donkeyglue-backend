@@ -10,21 +10,21 @@ use tokio::sync::{watch, RwLock};
 use tokio_stream::{wrappers::WatchStream, StreamExt};
 use uuid::Uuid;
 
-use crate::{game::game_state::GameState, Context};
+use crate::{
+    game::{
+        game::Game,
+        game_state::{GameState, Role},
+    },
+    Context,
+};
 
 pub async fn post_game(State(context): State<Arc<Context>>) -> String {
     tracing::info!("post_game");
 
     let mut games = context.games.write().await;
     let uuid = Uuid::new_v4();
-    let new_game = GameState::new(&context.seed_words);
-    games
-        .entry(uuid)
-        .or_insert(Arc::new(RwLock::new(new_game.clone())));
-
-    let (sender, _receiver1) = watch::channel(new_game.clone());
-    let mut publishers = context.publishers.write().await;
-    publishers.entry(uuid).or_insert(sender);
+    let new_game = Game::new(Role::Operative, &context.seed_words);
+    games.entry(uuid).or_insert(Arc::new(RwLock::new(new_game)));
 
     uuid.to_string()
 }
@@ -45,9 +45,9 @@ pub async fn get_game(
         simulator.step_until_player(game).await;
     });
 
-    let publishers = context.publishers.read().await;
-    let publisher = publishers.get(&game_id).unwrap();
-    let receiver = publisher.subscribe();
+    let games = context.games.read().await;
+    let game = games.get(&game_id).unwrap();
+    let receiver = game.read().await.get_sender().subscribe();
     let stream_receiver = WatchStream::new(receiver);
 
     let stream = stream_receiver
