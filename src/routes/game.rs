@@ -1,6 +1,6 @@
 use std::{convert::Infallible, sync::Arc, time::Duration};
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Error, Result};
 use axum::{
     extract::{Path, State},
     response::{sse::Event, Sse},
@@ -63,5 +63,7 @@ pub async fn get_game(
         ));
     }
 
-    Err(AppError(anyhow!("Could not find the game")))
+    let err = Error::msg("Could not find the game");
+    tracing::warn!("{}", err);
+    Err(AppError(err))
 }
