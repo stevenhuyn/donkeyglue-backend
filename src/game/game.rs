@@ -1,6 +1,6 @@
 use tokio::sync::watch;
 
-use crate::operative::{
+use crate::agent::{
     openai_operative::OpenaiOperative, openai_spymaster::OpenaiSpymaster, player::Player,
     Operative, Spymaster,
 };
@@ -84,7 +84,7 @@ impl Game {
     pub async fn step_simulation(&self, game_state: &mut GameState) -> Option<()> {
         match game_state.phase {
             Phase::RedSpymasterClueing { .. } => {
-                let clue = self.red_spymaster.provide_clue(game_state).await;
+                let clue = self.red_spymaster.try_gen_clue(game_state).await;
                 if let Some(clue) = clue {
                     game_state.provide_clue(clue);
                     Some(())
@@ -93,7 +93,7 @@ impl Game {
                 }
             }
             Phase::BlueSpymasterClueing { .. } => {
-                let clue = self.blue_spymaster.provide_clue(game_state).await;
+                let clue = self.blue_spymaster.try_gen_clue(game_state).await;
                 if let Some(clue) = clue {
                     game_state.provide_clue(clue);
                     Some(())
@@ -102,7 +102,7 @@ impl Game {
                 }
             }
             Phase::BlueOperativeChoosing { .. } => {
-                let guesses = self.blue_operative.make_guesses(game_state).await;
+                let guesses = self.blue_operative.try_gen_guesses(game_state).await;
                 if let Some(guesses) = guesses {
                     for guess in guesses {
                         game_state.make_guess(guess);
@@ -113,7 +113,7 @@ impl Game {
                 }
             }
             Phase::RedOperativeChoosing { .. } => {
-                let guesses = self.red_operative.make_guesses(game_state).await;
+                let guesses = self.red_operative.try_gen_guesses(game_state).await;
                 if let Some(guesses) = guesses {
                     for guess in guesses {
                         game_state.make_guess(guess);
