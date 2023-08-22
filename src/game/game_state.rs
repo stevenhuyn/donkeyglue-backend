@@ -116,10 +116,7 @@ impl GameState {
                 clue.remaining -= 1;
 
                 if clue.remaining == 0 {
-                    self.phase = Phase::Clue(match team {
-                        Team::Red => Team::Blue,
-                        Team::Blue => Team::Red,
-                    });
+                    self.phase = Phase::Clue(team.other());
                 }
 
                 Ok(())
