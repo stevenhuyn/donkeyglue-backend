@@ -6,6 +6,7 @@ use axum::{
 };
 use game::{game_controller::GameController, word_bank::WordBank};
 use tokio::sync::RwLock;
+use tracing::trace;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
 
@@ -37,8 +38,6 @@ async fn main() {
         controllers: RwLock::new(HashMap::new()),
         word_bank: WordBank::new(),
     });
-
-    tracing::info!("Building app");
 
     // build our application with a route
     let app = Router::new()
