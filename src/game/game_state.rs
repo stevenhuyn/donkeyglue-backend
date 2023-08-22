@@ -1,15 +1,19 @@
-use anyhow::Result;
+use std::fmt::Display;
 
-#[derive(Clone, Debug)]
-enum Identity {
+use anyhow::Result;
+use serde::Serialize;
+
+#[derive(Clone, Debug, Serialize)]
+pub enum Identity {
     Red,
     Blue,
     Bystander,
     Assassin,
+    Hidden,
 }
 
-#[derive(Clone, Debug)]
-struct Card {
+#[derive(Clone, Debug, Serialize)]
+pub struct Card {
     word: String,
     guessed: bool,
     identity: Identity,
@@ -32,10 +36,31 @@ pub struct Clue {
     remaining: u8,
 }
 
+impl Clue {
+    pub fn new(word: String, count: u8) -> Self {
+        Clue {
+            word,
+            count,
+            remaining: count,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub enum Team {
     Red,
     Blue,
+}
+
+impl Display for Team {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let team = match self {
+            Team::Red => "Red",
+            Team::Blue => "Blue",
+        };
+
+        write!(f, "{}", team)
+    }
 }
 
 impl Team {
@@ -56,7 +81,7 @@ pub enum Phase {
 /// Legal moves only
 #[derive(Clone, Debug)]
 pub struct GameState {
-    cards: Vec<Card>,
+    board: Vec<Card>,
     phase: Phase,
 }
 
@@ -97,7 +122,10 @@ impl GameState {
             .collect();
         let phase = Phase::Clue(Team::Red);
 
-        GameState { cards, phase }
+        GameState {
+            board: cards,
+            phase,
+        }
     }
 
     pub fn provide_clue(&mut self, clue: Clue) -> Result<()> {
@@ -122,6 +150,31 @@ impl GameState {
                 Ok(())
             }
             _ => Err(anyhow::anyhow!("Wrong phase")),
+        }
+    }
+
+    pub fn get_board(&self) -> &Vec<Card> {
+        &self.board
+    }
+
+    pub fn get_hidden_board(&self) -> Vec<Card> {
+        self.board
+            .iter()
+            .map(|card| Card {
+                word: card.word.clone(),
+                guessed: false,
+                identity: match card.guessed {
+                    true => card.identity.clone(),
+                    false => Identity::Hidden,
+                },
+            })
+            .collect()
+    }
+
+    pub fn get_clue(&self) -> Option<&Clue> {
+        match &self.phase {
+            Phase::Guess(_, clue) => Some(clue),
+            _ => None,
         }
     }
 }
