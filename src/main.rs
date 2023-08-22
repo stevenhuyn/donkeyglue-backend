@@ -1,30 +1,14 @@
-use std::{collections::HashMap, net::SocketAddr, sync::Arc};
+use std::{net::SocketAddr, sync::Arc};
 
-use axum::{
-    routing::{get, post},
-    Router,
-};
-use game::game::Game;
-use tokio::sync::{watch, Mutex, RwLock};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use uuid::Uuid;
+use axum::{routing::get, Router};
+use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 
-use crate::game::game_state::{GameState, Role};
-use crate::game::seed_words::SeedWords;
-use crate::routes::{
-    clue::post_clue,
-    game::{get_game, post_game},
-    guess::post_guess,
-};
+use crate::routes::root::get_root;
 
-pub struct Context {
-    games: RwLock<HashMap<Uuid, Arc<RwLock<Game>>>>,
-    seed_words: SeedWords,
-}
-
-mod game;
-mod operative;
+mod app_error;
 mod routes;
+
+pub struct Context {}
 
 #[tokio::main]
 async fn main() {
@@ -36,22 +20,13 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let context = Arc::new(Context {
-        games: RwLock::new(HashMap::new()),
-        seed_words: SeedWords::new(),
-    });
+    let context = Arc::new(Context {});
 
     tracing::info!("Building app");
 
     // build our application with a route
     let app = Router::new()
-        .route("/game/:id", get(get_game))
-        .with_state(context.clone())
-        .route("/game", post(post_game))
-        .with_state(context.clone())
-        .route("/guess/:id", post(post_guess))
-        .with_state(context.clone())
-        .route("/clue/:id", post(post_clue))
+        .route("/", get(get_root))
         .with_state(context.clone());
 
     // run it
