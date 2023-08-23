@@ -1,6 +1,6 @@
 use tokio::sync::watch;
 
-use super::game_state::GameState;
+use super::game_state::{GameState, Phase, Team};
 
 pub struct GameController {
     game_state: GameState,
@@ -16,5 +16,13 @@ impl GameController {
 
     pub fn get_sender(&self) -> &watch::Sender<GameState> {
         &self.sender
+    }
+
+    fn step_until_input(&mut self) {
+        match self.game_state.get_phase() {
+            Phase::Clue(Team::Red) => {}
+            Phase::Clue(Team::Blue) => {}
+            _ => {}
+        }
     }
 }

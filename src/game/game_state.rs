@@ -177,4 +177,8 @@ impl GameState {
             _ => None,
         }
     }
+
+    pub fn get_phase(&self) -> &Phase {
+        &self.phase
+    }
 }
