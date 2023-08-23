@@ -149,17 +149,14 @@ impl GameState {
 
         match &mut self.phase {
             Phase::Guess(team, clue) => {
-                if !self.board.iter().any(|card| card.word == word) {
+                let card = self.board.iter_mut().find(|card| card.word == word);
+
+                if card.is_none() {
                     tracing::debug!("Guess is not found on the board!");
                     return Err(anyhow::anyhow!("Guess is not found on the board!"));
                 };
 
-                let card = self
-                    .board
-                    .iter_mut()
-                    .find(|card| card.word == word)
-                    .unwrap();
-
+                let card = card.unwrap();
                 if card.guessed {
                     tracing::debug!("Card has already been guessed!");
                     return Err(anyhow::anyhow!("Card has already been guessed!"));
