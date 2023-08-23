@@ -20,7 +20,7 @@ mod game;
 mod routes;
 
 pub struct GameEnvironment {
-    controllers: RwLock<HashMap<Uuid, Arc<GameController>>>,
+    controllers: RwLock<HashMap<Uuid, GameController>>,
     word_bank: WordBank,
 }
 

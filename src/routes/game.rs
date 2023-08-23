@@ -31,7 +31,7 @@ pub async fn post_game(
 
     {
         let mut controllers = game_env.controllers.write().await;
-        controllers.entry(game_id).or_insert(Arc::new(controller));
+        controllers.entry(game_id).or_insert(controller);
     }
 
     Ok(Json(PostGameResponse { game_id }))
