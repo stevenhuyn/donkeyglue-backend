@@ -29,12 +29,14 @@ pub async fn post_guess(
     if let Some(controller) = controllers.get(&game_id) {
         let res = controller.player_guess(payload.guess).await;
 
-        tokio::spawn(async move {
-            let controllers = game_env_clone.controllers.read().await;
-            if let Some(controller) = controllers.get(&game_id) {
-                controller.step_until_input().await;
-            }
-        });
+        if res.is_some() {
+            tokio::spawn(async move {
+                let controllers = game_env_clone.controllers.read().await;
+                if let Some(controller) = controllers.get(&game_id) {
+                    controller.step_until_input().await;
+                }
+            });
+        }
 
         return res.ok_or_else(|| {
             let err = Error::msg("Could not make guess");
