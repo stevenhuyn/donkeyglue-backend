@@ -129,6 +129,11 @@ impl GameState {
     }
 
     pub fn provide_clue(&mut self, clue: Clue) -> Result<()> {
+        if self.board.iter().any(|card| card.word == clue.word) {
+            tracing::debug!("The clue is a word on the board!");
+            return Err(anyhow::anyhow!("The clue is a word on the board!"));
+        };
+
         tracing::debug!("GameState Provide Clue");
         match &self.phase {
             Phase::Clue(team) => {
@@ -140,9 +145,27 @@ impl GameState {
     }
 
     pub fn make_guess(&mut self, word: String) -> Result<()> {
-        tracing::debug!("Make Guess");
+        tracing::debug!("Making guess in game_state");
+
         match &mut self.phase {
             Phase::Guess(team, clue) => {
+                if !self.board.iter().any(|card| card.word == word) {
+                    tracing::debug!("Guess is not found on the board!");
+                    return Err(anyhow::anyhow!("Guess is not found on the board!"));
+                };
+
+                let card = self
+                    .board
+                    .iter_mut()
+                    .find(|card| card.word == word)
+                    .unwrap();
+
+                if card.guessed {
+                    tracing::debug!("Card has already been guessed!");
+                    return Err(anyhow::anyhow!("Card has already been guessed!"));
+                };
+
+                card.guessed = true;
                 clue.remaining -= 1;
 
                 if clue.remaining == 0 {
