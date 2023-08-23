@@ -2,7 +2,7 @@ use tokio::sync::{watch, RwLock};
 
 use super::{
     agent::{Agents, Operative, Spymaster},
-    game_state::{GameState, Phase, Team},
+    game_state::{Clue, GameState, Phase, Team},
 };
 
 pub struct GameController {
@@ -25,6 +25,26 @@ impl GameController {
 
     pub fn get_sender(&self) -> &watch::Sender<GameState> {
         &self.sender
+    }
+
+    pub async fn player_guess(&self, guess: String) -> Option<()> {
+        let mut game_state = self.game_state.write().await;
+        if let Ok(()) = game_state.make_guess(guess) {
+            self.sender.send_if_modified(|_game_state| true);
+            return Some(());
+        }
+
+        None
+    }
+
+    pub async fn player_clue(&self, word: String, count: u8) -> Option<()> {
+        let clue = Clue::new(word, count);
+        if let Ok(()) = self.game_state.write().await.provide_clue(clue) {
+            self.sender.send_if_modified(|_game_state| true);
+            return Some(());
+        }
+
+        None
     }
 
     async fn step_until_input(&self) {

@@ -9,26 +9,27 @@ use axum_macros::debug_handler;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::{app_error::AppError, GameEnvironment};
+use crate::{app_error::AppError, game::game_state::Clue, GameEnvironment};
 
 #[derive(Clone, Deserialize, Debug)]
-pub struct PostGuessRequest {
-    guess: String,
+pub struct PostClueRequest {
+    word: String,
+    count: u8,
 }
 
 #[debug_handler]
-pub async fn post_guess(
+pub async fn post_clue(
     Path(game_id): Path<Uuid>,
     State(game_env): State<Arc<GameEnvironment>>,
-    Json(payload): Json<PostGuessRequest>,
+    Json(payload): Json<PostClueRequest>,
 ) -> Result<(), AppError> {
     tracing::info!("post_game");
 
     let controllers = game_env.controllers.read().await;
     if let Some(controller) = controllers.get(&game_id) {
-        let res = controller.player_guess(payload.guess).await;
+        let res = controller.player_clue(payload.word, payload.count).await;
         return res.ok_or_else(|| {
-            let err = Error::msg("Could not make guess");
+            let err = Error::msg("Could not provide clue");
             tracing::warn!("{}", err);
             AppError(err)
         });
