@@ -138,7 +138,7 @@ impl GameState {
         }
     }
 
-    pub fn make_guess(&mut self, _word: String) -> Result<()> {
+    pub fn make_guess(&mut self, word: String) -> Result<()> {
         match &mut self.phase {
             Phase::Guess(team, clue) => {
                 clue.remaining -= 1;
