@@ -124,7 +124,7 @@ impl Spymaster for OpenaiSpymaster {
             .clone()
             .unwrap();
 
-        tracing::info!("Openai Spymaster second 2: {system_prompt}");
+        // tracing::info!("Openai Spymaster second 2: {system_prompt}");
 
         let re = Regex::new(r"\{[^\}]*\}").unwrap();
 
@@ -138,7 +138,7 @@ impl Spymaster for OpenaiSpymaster {
 
         let clue: OpenaiSpymasterResponse = serde_json::from_str(&json_guesses).unwrap();
         let clue = Clue::new(clue.word, clue.number);
-        tracing::info!("Openai Operative Clue: {clue:?}");
+        tracing::info!("Openai Spymaster Clue: {clue:?}");
         Some(clue)
     }
 }

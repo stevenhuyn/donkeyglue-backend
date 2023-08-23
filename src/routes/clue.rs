@@ -9,7 +9,7 @@ use axum_macros::debug_handler;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::{app_error::AppError, game::game_state::Clue, GameEnvironment};
+use crate::{app_error::AppError, GameEnvironment};
 
 #[derive(Clone, Deserialize, Debug)]
 pub struct PostClueRequest {
@@ -23,7 +23,7 @@ pub async fn post_clue(
     State(game_env): State<Arc<GameEnvironment>>,
     Json(payload): Json<PostClueRequest>,
 ) -> Result<(), AppError> {
-    tracing::info!("post_game");
+    tracing::info!("post_clue");
 
     let controllers = game_env.controllers.read().await;
     if let Some(controller) = controllers.get(&game_id) {

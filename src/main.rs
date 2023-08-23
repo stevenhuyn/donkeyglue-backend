@@ -10,7 +10,8 @@ use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::Subs
 use uuid::Uuid;
 
 use crate::routes::{
-    game::{get_game, post_game},
+    clue::post_clue,
+    game::{get_game, post_game, post_game_start},
     guess::post_guess,
     root::get_root,
 };
@@ -47,7 +48,11 @@ async fn main() {
         .with_state(game_env.clone())
         .route("/game/:id", get(get_game))
         .with_state(game_env.clone())
+        .route("/game/start/:id", get(post_game_start))
+        .with_state(game_env.clone())
         .route("/guess/:id", post(post_guess))
+        .with_state(game_env.clone())
+        .route("/clue/:id", post(post_clue))
         .with_state(game_env.clone());
 
     // run it

@@ -10,6 +10,7 @@ use axum_macros::debug_handler;
 use futures::Stream;
 use serde::Serialize;
 use tokio_stream::{wrappers::WatchStream, StreamExt};
+use tracing_subscriber::field::debug;
 use uuid::Uuid;
 
 use crate::{app_error::AppError, game::game_controller::GameController, GameEnvironment};
@@ -55,9 +56,27 @@ pub async fn get_game(
 
         return Ok(Sse::new(stream).keep_alive(
             axum::response::sse::KeepAlive::new()
-                .interval(Duration::from_secs(1))
+                .interval(Duration::from_secs(10))
                 .text("keep-alive-text"),
         ));
+    }
+
+    let err = Error::msg("Could not find the game");
+    tracing::warn!("{}", err);
+    Err(AppError(err))
+}
+
+#[debug_handler]
+pub async fn post_game_start(
+    Path(game_id): Path<Uuid>,
+    State(game_env): State<Arc<GameEnvironment>>,
+) -> Result<(), AppError> {
+    tracing::info!("post_game_start");
+
+    let controllers = game_env.controllers.read().await;
+    if let Some(controller) = controllers.get(&game_id) {
+        controller.step_until_input().await;
+        return Ok(());
     }
 
     let err = Error::msg("Could not find the game");

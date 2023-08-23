@@ -129,6 +129,7 @@ impl GameState {
     }
 
     pub fn provide_clue(&mut self, clue: Clue) -> Result<()> {
+        tracing::debug!("GameState Provide Clue");
         match &self.phase {
             Phase::Clue(team) => {
                 self.phase = Phase::Guess(team.other(), clue);
@@ -139,6 +140,7 @@ impl GameState {
     }
 
     pub fn make_guess(&mut self, word: String) -> Result<()> {
+        tracing::debug!("Make Guess");
         match &mut self.phase {
             Phase::Guess(team, clue) => {
                 clue.remaining -= 1;
@@ -158,6 +160,8 @@ impl GameState {
     }
 
     pub fn get_hidden_board(&self) -> Vec<Card> {
+        tracing::debug!("Get Hidden Board");
+
         self.board
             .iter()
             .map(|card| Card {
