@@ -1,6 +1,6 @@
 use std::{convert::Infallible, sync::Arc, time::Duration};
 
-use anyhow::{anyhow, Error, Result};
+use anyhow::{Error, Result};
 use axum::{
     extract::{Path, State},
     response::{sse::Event, Sse},
@@ -9,7 +9,6 @@ use axum::{
 use axum_macros::debug_handler;
 use futures::Stream;
 use serde::Serialize;
-use tokio::sync::RwLock;
 use tokio_stream::{wrappers::WatchStream, StreamExt};
 use uuid::Uuid;
 
