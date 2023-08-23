@@ -137,6 +137,7 @@ impl GameState {
         tracing::debug!("GameState Provide Clue");
         match &self.phase {
             Phase::Clue(team) => {
+                tracing::debug!("Succesfully gave clue: {:?}", &clue);
                 self.phase = Phase::Guess(team.other(), clue);
                 Ok(())
             }
@@ -169,6 +170,7 @@ impl GameState {
                     self.phase = Phase::Clue(team.other());
                 }
 
+                tracing::debug!("Succesfully made guess: {word}");
                 Ok(())
             }
             _ => Err(anyhow::anyhow!("Wrong phase")),
