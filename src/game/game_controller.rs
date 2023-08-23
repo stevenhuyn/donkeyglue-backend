@@ -28,27 +28,34 @@ impl GameController {
     }
 
     async fn step_until_input(&self) {
+        while self.step_game().await.is_some() {}
+    }
+
+    async fn step_game(&self) -> Option<()> {
         match self.game_state.read().await.get_phase() {
             Phase::Clue(Team::Red) => self.try_apply_clue(&self.agents.red_spymaster).await,
             Phase::Clue(Team::Blue) => self.try_apply_clue(&self.agents.blue_spymaster).await,
             Phase::Guess(Team::Blue, ..) => self.try_apply_guess(&self.agents.blue_operative).await,
             Phase::Guess(Team::Red, ..) => self.try_apply_guess(&self.agents.red_operative).await,
-            _ => {}
+            Phase::End => None,
         }
     }
 
-    async fn try_apply_clue(&self, spymaster: &Box<dyn Spymaster>) {
+    async fn try_apply_clue(&self, spymaster: &Box<dyn Spymaster>) -> Option<()> {
         let clue = {
             let game_state = self.game_state.read().await;
             spymaster.try_gen_clue(&game_state).await
         };
 
         if let Some(clue) = clue {
-            self.game_state.write().await.provide_clue(clue).unwrap();
+            let _ = self.game_state.write().await.provide_clue(clue);
+            return Some(());
         }
+
+        None
     }
 
-    async fn try_apply_guess(&self, operative: &Box<dyn Operative>) {
+    async fn try_apply_guess(&self, operative: &Box<dyn Operative>) -> Option<()> {
         let guesses = {
             let game_state = self.game_state.read().await;
             operative.try_gen_guesses(&game_state).await
@@ -61,7 +68,11 @@ impl GameController {
                     break;
                 }
             }
+
+            return Some(());
         }
+
+        None
     }
 
     pub fn get_game_state(&self) -> &RwLock<GameState> {
