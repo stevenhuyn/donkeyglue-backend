@@ -20,7 +20,6 @@ pub struct OpenaiOperative {
 impl OpenaiOperative {
     pub fn new(team: Team) -> Self {
         let backoff = ExponentialBackoffBuilder::new()
-        .
             .with_max_elapsed_time(Some(std::time::Duration::from_secs(60)))
             .build();
 
