@@ -342,6 +342,7 @@ dependencies = [
  "async-trait",
  "axum",
  "axum-macros",
+ "backoff",
  "futures",
  "headers",
  "rand",

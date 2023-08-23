@@ -4,6 +4,7 @@ use async_openai::{
     Client,
 };
 use async_trait::async_trait;
+use backoff::ExponentialBackoffBuilder;
 use regex::Regex;
 use serde::Deserialize;
 
@@ -18,8 +19,13 @@ pub struct OpenaiOperative {
 
 impl OpenaiOperative {
     pub fn new(team: Team) -> Self {
+        let backoff = ExponentialBackoffBuilder::new()
+        .
+            .with_max_elapsed_time(Some(std::time::Duration::from_secs(60)))
+            .build();
+
         Self {
-            client: Client::new(),
+            client: Client::new().with_backoff(backoff),
             team,
         }
     }
