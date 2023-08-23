@@ -10,6 +10,7 @@ pub struct GameController {
     game_state: RwLock<GameState>,
     sender: watch::Sender<GameState>,
     agents: Agents,
+    stepping: bool,
 }
 
 impl GameController {
@@ -19,6 +20,7 @@ impl GameController {
         let agents = Agents::new();
         GameController {
             game_state: RwLock::new(game_state),
+            stepping: false,
             sender,
             agents,
         }
@@ -59,6 +61,7 @@ impl GameController {
             let cloned_game_state = game_state.clone();
             let res = self.sender.send(cloned_game_state);
             println!("{:?}", res);
+
             return Some(());
         }
 
@@ -67,6 +70,14 @@ impl GameController {
     }
 
     pub async fn step_until_input(&self) {
+        if self.is_player_turn().await {
+            tracing::info!(
+                "Stepping aborted early cause player turn {:?}",
+                self.game_state.read().await.get_phase()
+            );
+            return;
+        }
+
         tracing::info!(
             "Initiating Stepping: {:?}",
             self.game_state.read().await.get_phase()
