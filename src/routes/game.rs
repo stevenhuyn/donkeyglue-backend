@@ -32,9 +32,7 @@ pub async fn post_game(
 
     {
         let mut controllers = game_env.controllers.write().await;
-        controllers
-            .entry(game_id)
-            .or_insert(Arc::new(RwLock::new(controller)));
+        controllers.entry(game_id).or_insert(Arc::new(controller));
     }
 
     Ok(Json(PostGameResponse { game_id }))
@@ -49,7 +47,7 @@ pub async fn get_game(
 
     let controllers = game_env.controllers.read().await;
     if let Some(controller) = controllers.get(&game_id) {
-        let receiver = controller.read().await.get_sender().subscribe();
+        let receiver = controller.get_sender().subscribe();
         let stream_receiver = WatchStream::new(receiver);
 
         let stream = stream_receiver
