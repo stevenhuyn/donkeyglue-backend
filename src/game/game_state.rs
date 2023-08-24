@@ -29,7 +29,7 @@ impl Card {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub struct Clue {
     word: String,
     count: u8,
@@ -46,7 +46,7 @@ impl Clue {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub enum Team {
     Red,
     Blue,
@@ -72,7 +72,7 @@ impl Team {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub enum Phase {
     Clue(Team),
     Guess(Team, Clue),
