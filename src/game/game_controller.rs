@@ -9,19 +9,21 @@ use super::{
 pub struct GameController {
     game_state: RwLock<GameState>,
     sender: watch::Sender<GameState>,
+
+    // Adding a single receiver so sender can send while no SSE sessions are active
+    receiver: watch::Receiver<GameState>,
     agents: Agents,
-    stepping: bool,
 }
 
 impl GameController {
     pub fn new(words: Vec<String>) -> Self {
         let game_state = GameState::new(words);
-        let (sender, _receiver) = watch::channel(game_state.clone());
+        let (sender, receiver) = watch::channel(game_state.clone());
         let agents = Agents::new();
         GameController {
             game_state: RwLock::new(game_state),
-            stepping: false,
             sender,
+            receiver,
             agents,
         }
     }
