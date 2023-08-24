@@ -3,14 +3,15 @@ use std::{convert::Infallible, sync::Arc, time::Duration};
 use anyhow::{Error, Result};
 use axum::{
     extract::{Path, State},
-    response::{sse::Event, Sse},
+    response::{
+        sse::{Event, KeepAlive},
+        IntoResponse, Sse,
+    },
     Json, TypedHeader,
 };
 use axum_macros::debug_handler;
-use futures::Stream;
 use serde::Serialize;
 use tokio_stream::{wrappers::WatchStream, StreamExt};
-use tracing_subscriber::field::debug;
 use uuid::Uuid;
 
 use crate::{app_error::AppError, game::game_controller::GameController, GameEnvironment};
@@ -42,7 +43,7 @@ pub async fn get_game(
     Path(game_id): Path<Uuid>,
     TypedHeader(user_agent): TypedHeader<headers::UserAgent>,
     State(game_env): State<Arc<GameEnvironment>>,
-) -> Result<Sse<impl Stream<Item = Result<Event, Infallible>>>, AppError> {
+) -> impl IntoResponse {
     tracing::info!("get_game: {:?}", user_agent);
 
     let controllers = game_env.controllers.read().await;
@@ -54,26 +55,21 @@ pub async fn get_game(
         let stream = stream_receiver
             .map(move |mut game_state| {
                 if board_hidden {
-                    let phase = game_state.get_phase().clone();
-                    let board = game_state.get_hidden_board().clone();
                     game_state = game_state.into_hidden_game_state();
                 }
 
-                let game_state_json = serde_json::to_string(&game_state);
-                Ok(Event::default().data(format!("{:?}", game_state)))
+                Event::default().json_data(&game_state)
             })
             .throttle(Duration::from_secs(3));
 
-        return Ok(Sse::new(stream).keep_alive(
-            axum::response::sse::KeepAlive::new()
-                .interval(Duration::from_secs(10))
-                .text("keep-alive-text"),
-        ));
+        return Sse::new(stream)
+            .keep_alive(KeepAlive::default())
+            .into_response();
     }
 
     let err = Error::msg("Could not find the game");
     tracing::warn!("{}", err);
-    Err(AppError(err))
+    AppError(err).into_response()
 }
 
 #[debug_handler]

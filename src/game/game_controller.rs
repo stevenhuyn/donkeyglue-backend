@@ -11,7 +11,7 @@ pub struct GameController {
     sender: watch::Sender<GameState>,
 
     // Adding a single receiver so sender can send while no SSE sessions are active
-    receiver: watch::Receiver<GameState>,
+    _receiver: watch::Receiver<GameState>,
     agents: Agents,
 }
 
@@ -23,7 +23,7 @@ impl GameController {
         GameController {
             game_state: RwLock::new(game_state),
             sender,
-            receiver,
+            _receiver: receiver,
             agents,
         }
     }
