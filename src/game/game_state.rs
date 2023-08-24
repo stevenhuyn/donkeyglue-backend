@@ -79,7 +79,7 @@ pub enum Phase {
     End,
 }
 /// Legal moves only
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub struct GameState {
     board: Vec<Card>,
     phase: Phase,
@@ -234,6 +234,13 @@ impl GameState {
                 },
             })
             .collect()
+    }
+
+    pub fn into_hidden_game_state(&self) -> Self {
+        Self {
+            board: self.get_hidden_board(),
+            phase: self.phase.clone(),
+        }
     }
 
     pub fn get_clue(&self) -> Option<&Clue> {

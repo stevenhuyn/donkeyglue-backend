@@ -37,6 +37,13 @@ pub struct Agents {
     pub blue_spymaster: Box<dyn Spymaster>,
 }
 
+pub enum PlayerRole {
+    RedOperative,
+    BlueOperative,
+    RedSpymaster,
+    BlueSpymaster,
+}
+
 impl Agents {
     pub fn new() -> Self {
         Self {
@@ -45,5 +52,16 @@ impl Agents {
             red_spymaster: Box::new(Player::new()),
             blue_spymaster: Box::new(OpenaiSpymaster::new(Team::Blue)),
         }
+    }
+
+    /// Determines if the board should be hidden from the player, for using with game_state.get_hidden_board()
+    pub fn should_hide_board(&self) -> bool {
+        if self.red_operative.is_player() || self.blue_operative.is_player() {
+            return true;
+        } else if self.red_spymaster.is_player() || self.blue_spymaster.is_player() {
+            return false;
+        }
+
+        unreachable!("At least one player should be a player")
     }
 }

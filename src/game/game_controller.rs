@@ -181,4 +181,8 @@ impl GameController {
     pub fn get_game_state(&self) -> &RwLock<GameState> {
         &self.game_state
     }
+
+    pub fn get_agents(&self) -> &Agents {
+        &self.agents
+    }
 }

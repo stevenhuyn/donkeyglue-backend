@@ -50,8 +50,18 @@ pub async fn get_game(
         let receiver = controller.get_sender().subscribe();
         let stream_receiver = WatchStream::new(receiver);
 
+        let board_hidden = controller.get_agents().should_hide_board();
         let stream = stream_receiver
-            .map(|game_state| Ok(Event::default().data(format!("{:?}", game_state))))
+            .map(move |mut game_state| {
+                if board_hidden {
+                    let phase = game_state.get_phase().clone();
+                    let board = game_state.get_hidden_board().clone();
+                    game_state = game_state.into_hidden_game_state();
+                }
+
+                let game_state_json = serde_json::to_string(&game_state);
+                Ok(Event::default().data(format!("{:?}", game_state)))
+            })
             .throttle(Duration::from_secs(3));
 
         return Ok(Sse::new(stream).keep_alive(
