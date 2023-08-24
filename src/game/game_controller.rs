@@ -100,19 +100,23 @@ impl GameController {
     async fn step_game(&self) -> Option<()> {
         let phase = self.game_state.read().await.get_phase().clone();
         match phase {
-            Phase::Clue(Team::Red) => {
+            Phase::Clue { team: Team::Red } => {
                 self.try_apply_clue(self.agents.red_spymaster.as_ref())
                     .await
             }
-            Phase::Clue(Team::Blue) => {
+            Phase::Clue { team: Team::Blue } => {
                 self.try_apply_clue(self.agents.blue_spymaster.as_ref())
                     .await
             }
-            Phase::Guess(Team::Blue, ..) => {
+            Phase::Guess {
+                team: Team::Blue, ..
+            } => {
                 self.try_apply_guess(self.agents.blue_operative.as_ref())
                     .await
             }
-            Phase::Guess(Team::Red, ..) => {
+            Phase::Guess {
+                team: Team::Red, ..
+            } => {
                 self.try_apply_guess(self.agents.red_operative.as_ref())
                     .await
             }
@@ -122,10 +126,14 @@ impl GameController {
 
     async fn is_player_turn(&self) -> bool {
         match self.game_state.read().await.get_phase() {
-            Phase::Clue(Team::Red) => self.agents.red_spymaster.is_player(),
-            Phase::Clue(Team::Blue) => self.agents.blue_spymaster.is_player(),
-            Phase::Guess(Team::Blue, ..) => self.agents.blue_operative.is_player(),
-            Phase::Guess(Team::Red, ..) => self.agents.red_operative.is_player(),
+            Phase::Clue { team: Team::Red } => self.agents.red_spymaster.is_player(),
+            Phase::Clue { team: Team::Blue } => self.agents.blue_spymaster.is_player(),
+            Phase::Guess {
+                team: Team::Blue, ..
+            } => self.agents.blue_operative.is_player(),
+            Phase::Guess {
+                team: Team::Red, ..
+            } => self.agents.red_operative.is_player(),
             Phase::End => false,
         }
     }

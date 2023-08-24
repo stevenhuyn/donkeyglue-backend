@@ -73,9 +73,10 @@ impl Team {
 }
 
 #[derive(Clone, Debug, Serialize)]
+#[serde(tag = "type")]
 pub enum Phase {
-    Clue(Team),
-    Guess(Team, Clue),
+    Clue { team: Team },
+    Guess { team: Team, clue: Clue },
     End,
 }
 /// Legal moves only
@@ -120,7 +121,7 @@ impl GameState {
             .zip(Self::IDENTITIES_ARRAY)
             .map(|(word, identity)| Card::new(word, identity))
             .collect();
-        let phase = Phase::Clue(Team::Red);
+        let phase = Phase::Clue { team: Team::Red };
 
         GameState {
             board: cards,
@@ -137,9 +138,12 @@ impl GameState {
         tracing::debug!("GameState Provide Clue");
         // TODO: Make this an if let
         match &self.phase {
-            Phase::Clue(team) => {
+            Phase::Clue { team } => {
                 tracing::debug!("Succesfully gave clue: {:?}", &clue);
-                self.phase = Phase::Guess(team.clone(), clue);
+                self.phase = Phase::Guess {
+                    team: team.clone(),
+                    clue,
+                };
                 tracing::debug!("New Phase: {:?}", &self.phase);
 
                 Ok(())
@@ -153,7 +157,7 @@ impl GameState {
 
         // TODO: Make this an if let
         match &mut self.phase {
-            Phase::Guess(team, clue) => {
+            Phase::Guess { team, clue } => {
                 let card = self.board.iter_mut().find(|card| card.word == word);
 
                 if card.is_none() {
@@ -178,7 +182,7 @@ impl GameState {
                 clue.remaining -= 1;
 
                 if clue.remaining == 0 {
-                    self.phase = Phase::Clue(team.other());
+                    self.phase = Phase::Clue { team: team.other() };
                     tracing::debug!("New Phase: {:?}", &self.phase);
                 }
 
@@ -245,7 +249,7 @@ impl GameState {
 
     pub fn get_clue(&self) -> Option<&Clue> {
         match &self.phase {
-            Phase::Guess(_, clue) => Some(clue),
+            Phase::Guess { clue, .. } => Some(clue),
             _ => None,
         }
     }
