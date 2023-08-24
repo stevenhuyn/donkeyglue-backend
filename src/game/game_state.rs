@@ -3,7 +3,7 @@ use std::fmt::Display;
 use anyhow::Result;
 use serde::Serialize;
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, PartialEq)]
 pub enum Identity {
     Red,
     Blue,
@@ -135,6 +135,7 @@ impl GameState {
         };
 
         tracing::debug!("GameState Provide Clue");
+        // TODO: Make this an if let
         match &self.phase {
             Phase::Clue(team) => {
                 tracing::debug!("Succesfully gave clue: {:?}", &clue);
@@ -150,6 +151,7 @@ impl GameState {
     pub fn make_guess(&mut self, word: String) -> Result<()> {
         tracing::debug!("Making guess in game_state");
 
+        // TODO: Make this an if let
         match &mut self.phase {
             Phase::Guess(team, clue) => {
                 let card = self.board.iter_mut().find(|card| card.word == word);
@@ -165,12 +167,25 @@ impl GameState {
                     return Err(anyhow::anyhow!("Card has already been guessed!"));
                 };
 
+                if card.identity == Identity::Assassin {
+                    tracing::debug!("Card has already been guessed!");
+                    self.phase = Phase::End;
+                    tracing::debug!("New Phase: {:?}", &self.phase);
+                    return Ok(());
+                }
+
                 card.guessed = true;
                 clue.remaining -= 1;
 
                 if clue.remaining == 0 {
                     self.phase = Phase::Clue(team.other());
                     tracing::debug!("New Phase: {:?}", &self.phase);
+                }
+
+                if let Some(_team) = self.check_win_state() {
+                    self.phase = Phase::End;
+                    tracing::debug!("New Phase: {:?}", &self.phase);
+                    return Ok(());
                 }
 
                 tracing::debug!("Succesfully made guess: {word}");
@@ -182,6 +197,27 @@ impl GameState {
 
     pub fn get_board(&self) -> &Vec<Card> {
         &self.board
+    }
+
+    pub fn check_win_state(&self) -> Option<Team> {
+        let red_win = self
+            .board
+            .iter()
+            .filter(|card| card.identity == Identity::Red)
+            .all(|card| card.guessed);
+
+        let blue_win = self
+            .board
+            .iter()
+            .filter(|card| card.identity == Identity::Blue)
+            .all(|card| card.guessed);
+
+        match (red_win, blue_win) {
+            (true, false) => Some(Team::Red),
+            (false, true) => Some(Team::Blue),
+            (true, true) => Some(Team::Red),
+            (false, false) => None,
+        }
     }
 
     pub fn get_hidden_board(&self) -> Vec<Card> {
