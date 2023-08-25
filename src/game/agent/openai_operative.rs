@@ -63,8 +63,10 @@ type OpenaiOperativeResponse = Vec<OpenaiOperativeGuess>;
 #[derive(Debug, Clone, Deserialize)]
 struct OpenaiOperativeGuess {
     guess: String,
-    justification: String,
-    confidence: f32,
+    #[serde(rename = "justification")]
+    _justification: String,
+    #[serde(rename = "confidence")]
+    _confidence: f32,
 }
 
 #[async_trait]

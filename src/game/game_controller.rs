@@ -1,4 +1,3 @@
-use futures::future::ready;
 use tokio::sync::{watch, RwLock};
 
 use super::{
@@ -184,10 +183,6 @@ impl GameController {
         }
 
         None
-    }
-
-    pub fn get_game_state(&self) -> &RwLock<GameState> {
-        &self.game_state
     }
 
     pub fn get_agents(&self) -> &Agents {
