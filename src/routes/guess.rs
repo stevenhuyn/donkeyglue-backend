@@ -22,7 +22,7 @@ pub async fn post_guess(
     State(game_env): State<Arc<GameEnvironment>>,
     Json(payload): Json<PostGuessRequest>,
 ) -> Result<(), AppError> {
-    tracing::info!("post_game");
+    tracing::info!("post_guess");
 
     let game_env_clone = game_env.clone();
     let controllers = game_env.controllers.read().await;
