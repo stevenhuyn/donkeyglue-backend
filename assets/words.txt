@@ -233,7 +233,6 @@ Meditation
 Melody
 Metal
 Midnight
-Milky Way
 Mind
 Minute
 Mission
@@ -332,7 +331,6 @@ Sight
 Sing
 Sky
 Sleep
-Sleeping Bag
 Smoke
 Society
 Socks
@@ -424,5 +422,4 @@ Wisdom
 Wise
 Wonder
 Wood
-Woods
 World
