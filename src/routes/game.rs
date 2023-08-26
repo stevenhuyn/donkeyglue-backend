@@ -10,11 +10,20 @@ use axum::{
     Json, TypedHeader,
 };
 use axum_macros::debug_handler;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tokio_stream::{wrappers::WatchStream, StreamExt};
 use uuid::Uuid;
 
-use crate::{app_error::AppError, game::game_controller::GameController, GameEnvironment};
+use crate::{
+    app_error::AppError,
+    game::game_controller::{ChannelEvent, GameController, Role},
+    GameEnvironment,
+};
+
+#[derive(Deserialize, Debug)]
+pub struct PostGameRequest {
+    role: Role,
+}
 
 #[derive(Serialize, Debug)]
 pub struct PostGameResponse {
@@ -24,12 +33,13 @@ pub struct PostGameResponse {
 #[debug_handler]
 pub async fn post_game(
     State(game_env): State<Arc<GameEnvironment>>,
+    Json(payload): Json<PostGameRequest>,
 ) -> Result<Json<PostGameResponse>, AppError> {
     tracing::info!("post_game");
 
     let game_id = Uuid::new_v4();
     let words = game_env.word_bank.get_word_set(25);
-    let controller = GameController::new(words);
+    let controller = GameController::new(payload.role, words);
 
     {
         let mut controllers = game_env.controllers.write().await;
@@ -53,12 +63,17 @@ pub async fn get_game(
 
         let board_hidden = controller.agents().should_hide_board();
         let stream = stream_receiver
-            .map(move |mut game_state| {
-                if board_hidden {
-                    game_state = game_state.to_hidden_game_state();
-                }
+            .map(move |channel_event| match channel_event {
+                channel_event @ ChannelEvent::Playing {
+                    mut game_state,
+                    role,
+                } => {
+                    if board_hidden {
+                        game_state = game_state.to_hidden_game_state();
+                    }
 
-                Event::default().json_data(&game_state)
+                    Event::default().json_data(&channel_event);
+                }
             })
             .throttle(Duration::from_secs(3));
 

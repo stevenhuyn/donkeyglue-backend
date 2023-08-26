@@ -37,13 +37,6 @@ pub struct Agents {
     pub blue_spymaster: Box<dyn Spymaster>,
 }
 
-// pub enum PlayerRole {
-//     RedOperative,
-//     BlueOperative,
-//     RedSpymaster,
-//     BlueSpymaster,
-// }
-
 impl Agents {
     pub fn new() -> Self {
         Self {

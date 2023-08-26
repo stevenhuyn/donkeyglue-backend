@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use tokio::sync::{watch, RwLock};
 
 use super::{
@@ -5,29 +6,46 @@ use super::{
     game_state::{Clue, GameState, Phase, Team},
 };
 
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+pub enum Role {
+    RedOperative,
+    RedSpymaster,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub enum ChannelEvent {
+    Playing { game_state: GameState, role: Role },
+}
+
 pub struct GameController {
     game_state: RwLock<GameState>,
-    sender: watch::Sender<GameState>,
+    sender: watch::Sender<ChannelEvent>,
 
     // Adding a single receiver so sender can send while no SSE sessions are active
-    _receiver: watch::Receiver<GameState>,
+    _receiver: watch::Receiver<ChannelEvent>,
     agents: Agents,
+    role: Role,
 }
 
 impl GameController {
-    pub fn new(words: Vec<String>) -> Self {
+    pub fn new(role: Role, words: Vec<String>) -> Self {
         let game_state = GameState::new(words);
-        let (sender, receiver) = watch::channel(game_state.clone());
+        let initial_channel_event = ChannelEvent::Playing {
+            game_state: game_state.clone(),
+            role: role.clone(),
+        };
+        let (sender, receiver) = watch::channel(initial_channel_event);
         let agents = Agents::new();
         GameController {
             game_state: RwLock::new(game_state),
             sender,
             _receiver: receiver,
             agents,
+            role,
         }
     }
 
-    pub fn sender(&self) -> &watch::Sender<GameState> {
+    pub fn sender(&self) -> &watch::Sender<ChannelEvent> {
         &self.sender
     }
 
@@ -40,7 +58,11 @@ impl GameController {
         let mut game_state = self.game_state.write().await;
         if let Ok(()) = game_state.make_guess(guess) {
             tracing::debug!("Player Guess attempting to update SSE");
-            self.sender.send(game_state.clone()).unwrap();
+            let channel_event = ChannelEvent::Playing {
+                game_state: game_state.clone(),
+                role: self.role.clone(),
+            };
+            self.sender.send(channel_event).unwrap();
             return Some(());
         }
 
@@ -59,8 +81,11 @@ impl GameController {
         let mut game_state = self.game_state.write().await;
         if let Ok(()) = game_state.provide_clue(clue) {
             tracing::debug!("Player Clue attempting to update SSE");
-            let cloned_game_state = game_state.clone();
-            let res = self.sender.send(cloned_game_state);
+            let channel_event = ChannelEvent::Playing {
+                game_state: game_state.clone(),
+                role: self.role.clone(),
+            };
+            let res = self.sender.send(channel_event);
             println!("{:?}", res);
 
             return Some(());
@@ -145,9 +170,11 @@ impl GameController {
 
             tracing::debug!("Attempting to update SSE");
 
-            self.sender
-                .send(self.game_state.read().await.clone())
-                .unwrap();
+            let channel_event = ChannelEvent::Playing {
+                game_state: self.game_state.read().await.clone(),
+                role: self.role.clone(),
+            };
+            self.sender.send(channel_event).unwrap();
             return Some(());
         }
 
@@ -167,7 +194,11 @@ impl GameController {
                 tracing::debug!("Attempting to provide guess: {:?}", guess);
                 if game_state.make_guess(guess).is_ok() {
                     tracing::debug!("Attempting to update SSE");
-                    self.sender.send(game_state.clone()).unwrap();
+                    let channel_event = ChannelEvent::Playing {
+                        game_state: self.game_state.read().await.clone(),
+                        role: self.role.clone(),
+                    };
+                    self.sender.send(channel_event).unwrap();
                 } else {
                     break;
                 }
