@@ -8,7 +8,7 @@ use backoff::ExponentialBackoffBuilder;
 use regex::Regex;
 use serde::Deserialize;
 
-use crate::game::game_state::{GameState, Team};
+use crate::game::game_state::{Card, GameState, Identity, Team};
 
 use super::Operative;
 
@@ -32,10 +32,13 @@ impl OpenaiOperative {
 
 const OPERATIVE_STEP_1: &str = r#"
 You are an expert player of the game Codenames. 
-Currently you are playing as the operative role on the <TEAM> team.
+You are playing as the operative role on the <TEAM> team.
 Discuss your options and what your guesses should be based on the current game board and clue.
 <BOARD>
 <CLUE>
+
+The words left to guess are
+<REMAINING>
 "#;
 
 const OPERATIVE_STEP_2: &str = r#"
@@ -75,13 +78,22 @@ impl Operative for OpenaiOperative {
         tracing::info!("Openai Operative making guess");
 
         let clue = format!("{:?}", game_state.clue().unwrap());
-        let board = serde_json::to_string(&game_state.to_hidden_board()).unwrap();
+        let hidden_board = game_state.to_hidden_board();
+        let board = Card::board_string(&hidden_board);
+        let remaining_cards = hidden_board
+            .into_iter()
+            .filter(|card| card.identity() == &Identity::Hidden)
+            .map(|card| card.word().to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
         let system_prompt = OPERATIVE_STEP_1
             .replace("<TEAM>", &self.team.to_string())
             .replace("<BOARD>", &board)
-            .replace("<CLUE>", &clue);
+            .replace("<CLUE>", &clue)
+            .replace("<REMAINING>", &remaining_cards);
 
-        // tracing::info!("Openai Operative first prompt: {system_prompt}");
+        tracing::info!("Openai Operative first prompt: {system_prompt}");
 
         let messages = [ChatCompletionRequestMessageArgs::default()
             .role(Role::System)

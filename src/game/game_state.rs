@@ -13,6 +13,20 @@ pub enum Identity {
     Hidden,
 }
 
+impl Display for Identity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let identity = match self {
+            Identity::Red => "Red",
+            Identity::Blue => "Blue",
+            Identity::Bystander => "Bystander",
+            Identity::Assassin => "Assassin",
+            Identity::Hidden => "Hidden",
+        };
+
+        write!(f, "{}", identity)
+    }
+}
+
 #[derive(Clone, Debug, Serialize)]
 pub struct Card {
     word: String,
@@ -27,6 +41,41 @@ impl Card {
             guessed: false,
             identity,
         }
+    }
+
+    pub fn guessed(&self) -> bool {
+        self.guessed
+    }
+
+    pub fn word(&self) -> &str {
+        &self.word
+    }
+
+    pub fn identity(&self) -> &Identity {
+        &self.identity
+    }
+
+    pub fn board_string(board: &[Card]) -> String {
+        let mut str = String::new();
+        for chunk in board.chunks(5) {
+            str.push_str(
+                &chunk
+                    .iter()
+                    .map(|card| card.to_string())
+                    .collect::<Vec<String>>()
+                    .join(","),
+            );
+
+            str.push('\n');
+        }
+
+        str
+    }
+}
+
+impl Display for Card {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({} - {})", self.word(), self.identity())
     }
 }
 
@@ -123,6 +172,8 @@ impl GameState {
             .map(|(word, identity)| Card::new(word, identity))
             .collect();
 
+        tracing::debug!("{:?}", cards);
+
         cards.shuffle(&mut rand::thread_rng());
         let phase = Phase::Clue { team: Team::Red };
 
@@ -174,15 +225,15 @@ impl GameState {
                     return Err(anyhow::anyhow!("Card has already been guessed!"));
                 };
 
+                card.guessed = true;
+                clue.remaining -= 1;
+
                 if card.identity == Identity::Assassin {
-                    tracing::debug!("Card has already been guessed!");
+                    tracing::debug!("Assassin has been guessed!");
                     self.phase = Phase::End;
                     tracing::debug!("New Phase: {:?}", &self.phase);
                     return Ok(());
                 }
-
-                card.guessed = true;
-                clue.remaining -= 1;
 
                 if clue.remaining == 0 {
                     self.phase = Phase::Clue { team: team.other() };

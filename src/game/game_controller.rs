@@ -55,14 +55,16 @@ impl GameController {
     }
 
     pub async fn player_guess(&self, guess: String) -> Option<()> {
+        tracing::info!("Player Clue: Init");
+
         if !self.is_player_turn().await {
-            tracing::info!("Not player turn");
+            tracing::info!("Player Clue: Not player turn");
             return None;
         }
 
         let mut game_state = self.game_state.write().await;
         if let Ok(()) = game_state.make_guess(guess) {
-            tracing::debug!("Player Guess attempting to update SSE");
+            tracing::debug!("Player Guess: Update SSE");
             let channel_event = ChannelEvent::Playing {
                 game_state: game_state.clone(),
                 role: self.role.clone(),
@@ -76,16 +78,16 @@ impl GameController {
     }
 
     pub async fn player_clue(&self, word: String, count: u8) -> Option<()> {
-        tracing::debug!("Player providing clue");
+        tracing::debug!("Player Clue: Init");
         if !self.is_player_turn().await {
-            tracing::info!("Not player turn");
+            tracing::info!("Player Clue: Not player turn");
             return None;
         }
 
         let clue = Clue::new(word, count);
         let mut game_state = self.game_state.write().await;
         if let Ok(()) = game_state.provide_clue(clue) {
-            tracing::debug!("Player Clue attempting to update SSE");
+            tracing::debug!("Player Clue: Update SSE");
             let channel_event = ChannelEvent::Playing {
                 game_state: game_state.clone(),
                 role: self.role.clone(),
@@ -148,15 +150,31 @@ impl GameController {
     }
 
     async fn is_player_turn(&self) -> bool {
+        {
+            tracing::debug!("Is Player Turn: {:?}", self.game_state.read().await.phase());
+        }
+
         match self.game_state.read().await.phase() {
-            Phase::Clue { team: Team::Red } => self.agents.red_spymaster.is_player(),
-            Phase::Clue { team: Team::Blue } => self.agents.blue_spymaster.is_player(),
+            Phase::Clue { team: Team::Red } => {
+                tracing::debug!("Red Spymaster Check");
+                self.agents.red_spymaster.is_player()
+            }
+            Phase::Clue { team: Team::Blue } => {
+                tracing::debug!("Blue Spymaster Check");
+                self.agents.blue_spymaster.is_player()
+            }
             Phase::Guess {
                 team: Team::Blue, ..
-            } => self.agents.blue_operative.is_player(),
+            } => {
+                tracing::debug!("Blue Operative Check");
+                self.agents.blue_operative.is_player()
+            }
             Phase::Guess {
                 team: Team::Red, ..
-            } => self.agents.red_operative.is_player(),
+            } => {
+                tracing::debug!("Blue Operative Check");
+                self.agents.red_operative.is_player()
+            }
             Phase::End => false,
         }
     }
@@ -169,12 +187,11 @@ impl GameController {
 
         if let Some(clue) = clue {
             {
-                tracing::debug!("Attempting to provide clue: {:?}", clue);
+                tracing::debug!("AI Clue: {:?}", clue);
                 let _ = self.game_state.write().await.provide_clue(clue);
             }
 
-            tracing::debug!("Attempting to update SSE");
-
+            tracing::debug!("AI Clue: Update SSE");
             let channel_event = ChannelEvent::Playing {
                 game_state: self.game_state.read().await.clone(),
                 role: self.role.clone(),
@@ -193,16 +210,16 @@ impl GameController {
         };
 
         if let Some(guesses) = guesses {
-            tracing::debug!("Attempting to provide guesses: {:?}", guesses);
+            tracing::debug!("AI Guesses: {:?}", guesses);
             for guess in guesses {
-                tracing::debug!("Attempting to provide guess: {:?}", guess);
+                tracing::debug!("AI Guess: {:?}", guess);
                 let guess_result = {
                     let mut game_state = self.game_state.write().await;
                     game_state.make_guess(guess)
                 };
 
                 if guess_result.is_ok() {
-                    tracing::debug!("Attempting to update SSE");
+                    tracing::debug!("AI Guess - Update SSE");
                     let channel_event = ChannelEvent::Playing {
                         game_state: self.game_state.read().await.clone(),
                         role: self.role.clone(),

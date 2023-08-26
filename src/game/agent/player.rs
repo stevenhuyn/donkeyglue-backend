@@ -19,6 +19,7 @@ impl Operative for Player {
     }
 
     fn is_player(&self) -> bool {
+        tracing::debug!("Is Player True");
         true
     }
 }
@@ -30,6 +31,7 @@ impl Spymaster for Player {
     }
 
     fn is_player(&self) -> bool {
+        tracing::debug!("Is Player True");
         true
     }
 }

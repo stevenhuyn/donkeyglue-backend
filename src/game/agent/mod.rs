@@ -16,6 +16,8 @@ pub trait Operative: Send + Sync {
     async fn try_gen_guesses(&self, game_state: &GameState) -> Option<Vec<String>>;
 
     fn is_player(&self) -> bool {
+        tracing::debug!("Is Player False");
+
         false
     }
 }
@@ -26,6 +28,8 @@ pub trait Spymaster: Send + Sync {
     async fn try_gen_clue(&self, game_state: &GameState) -> Option<Clue>;
 
     fn is_player(&self) -> bool {
+        tracing::debug!("Is Player False");
+
         false
     }
 }

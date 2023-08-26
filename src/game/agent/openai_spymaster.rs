@@ -8,7 +8,7 @@ use backoff::ExponentialBackoffBuilder;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
-use crate::game::game_state::{Clue, GameState, Team};
+use crate::game::game_state::{Card, Clue, GameState, Team};
 
 use super::Spymaster;
 
@@ -55,7 +55,7 @@ The format of the response should be a JSON object of the following format
 ```
 "#;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 struct OpenaiSpymasterResponse {
     word: String,
     number: u8,
@@ -68,7 +68,7 @@ impl Spymaster for OpenaiSpymaster {
     async fn try_gen_clue(&self, game_state: &GameState) -> Option<Clue> {
         tracing::info!("Openai Spymaster creating clue");
 
-        let board = serde_json::to_string(game_state.board()).unwrap();
+        let board = Card::board_string(game_state.board());
         let system_prompt = OPERATIVE_STEP_1
             .replace("<TEAM>", &self.team.to_string())
             .replace("<BOARD>", &board);
@@ -142,6 +142,9 @@ impl Spymaster for OpenaiSpymaster {
             .to_string();
 
         let clue: OpenaiSpymasterResponse = serde_json::from_str(&json_guesses).unwrap();
+
+        tracing::debug!("Openai Spymaster Clue: {clue:?}");
+
         let clue = Clue::new(clue.word, clue.number);
         tracing::info!("Openai Spymaster Clue: {clue:?}");
         Some(clue)
