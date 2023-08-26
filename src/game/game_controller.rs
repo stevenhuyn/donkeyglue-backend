@@ -194,10 +194,14 @@ impl GameController {
 
         if let Some(guesses) = guesses {
             tracing::debug!("Attempting to provide guesses: {:?}", guesses);
-            let mut game_state = self.game_state.write().await;
             for guess in guesses {
                 tracing::debug!("Attempting to provide guess: {:?}", guess);
-                if game_state.make_guess(guess).is_ok() {
+                let guess_result = {
+                    let mut game_state = self.game_state.write().await;
+                    game_state.make_guess(guess)
+                };
+
+                if guess_result.is_ok() {
                     tracing::debug!("Attempting to update SSE");
                     let channel_event = ChannelEvent::Playing {
                         game_state: self.game_state.read().await.clone(),

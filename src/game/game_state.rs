@@ -228,8 +228,6 @@ impl GameState {
     }
 
     pub fn to_hidden_board(&self) -> Vec<Card> {
-        tracing::debug!("Get Hidden Board");
-
         self.board
             .iter()
             .map(|card| Card {

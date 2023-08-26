@@ -48,7 +48,7 @@ async fn main() {
         .with_state(game_env.clone())
         .route("/game/:id", get(get_game))
         .with_state(game_env.clone())
-        .route("/game/start/:id", get(post_game_start))
+        .route("/game/start/:id", post(post_game_start))
         .with_state(game_env.clone())
         .route("/guess/:id", post(post_guess))
         .with_state(game_env.clone())

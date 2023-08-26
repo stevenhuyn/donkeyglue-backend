@@ -40,7 +40,10 @@ pub struct Agents {
 impl Agents {
     pub fn new(role: Role) -> Self {
         let (red_operative, red_spymaster): (Box<dyn Operative>, Box<dyn Spymaster>) = match role {
-            Role::RedOperative => (Box::new(Player::new()), Box::new(Player::new())),
+            Role::RedOperative => (
+                Box::new(Player::new()),
+                Box::new(OpenaiSpymaster::new(Team::Red)),
+            ),
             Role::RedSpymaster => (
                 Box::new(OpenaiOperative::new(Team::Red)),
                 Box::new(Player::new()),

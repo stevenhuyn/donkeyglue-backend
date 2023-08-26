@@ -62,13 +62,11 @@ pub async fn get_game(
         let stream_receiver = WatchStream::new(receiver);
 
         let board_hidden = controller.agents().should_hide_board();
-        tracing::debug!("Should hide? {:?}", board_hidden);
 
         let stream = stream_receiver
             .map(move |mut channel_event| match &mut channel_event {
                 ChannelEvent::Playing { game_state, .. } => {
                     if board_hidden {
-                        tracing::debug!("Hiding board");
                         *game_state = game_state.to_hidden_game_state();
                     }
 
