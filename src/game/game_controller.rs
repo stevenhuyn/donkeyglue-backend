@@ -23,6 +23,7 @@ pub enum ChannelEvent {
 }
 
 pub struct GameController {
+    // TODO: make RwLock<GameState> the self method type
     game_state: RwLock<GameState>,
     sender: watch::Sender<ChannelEvent>,
 

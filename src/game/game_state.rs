@@ -71,7 +71,18 @@ impl Card {
 
 impl Display for Card {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({} - {})", self.word(), self.identity())
+        let card_state = match self.guessed {
+            true => "Guessed",
+            false => "Hidden",
+        };
+
+        write!(
+            f,
+            "({} - {} - {})",
+            self.word(),
+            self.identity(),
+            card_state
+        )
     }
 }
 
