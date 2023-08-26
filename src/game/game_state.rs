@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
 use anyhow::Result;
+use rand::seq::SliceRandom;
 use serde::Serialize;
 
 #[derive(Clone, Debug, Serialize, PartialEq)]
@@ -116,11 +117,13 @@ impl GameState {
     ];
 
     pub fn new(words: Vec<String>) -> Self {
-        let cards: Vec<Card> = words
+        let mut cards: Vec<Card> = words
             .into_iter()
             .zip(Self::IDENTITIES_ARRAY)
             .map(|(word, identity)| Card::new(word, identity))
             .collect();
+
+        cards.shuffle(&mut rand::thread_rng());
         let phase = Phase::Clue { team: Team::Red };
 
         GameState {
