@@ -54,6 +54,15 @@ async fn main() {
         .allow_methods([Method::GET, Method::POST])
         .allow_headers([CONTENT_TYPE]);
 
+    let host = match render_env {
+        false => [127, 0, 0, 1],
+        true => [0, 0, 0, 0],
+    };
+
+    let port_string = env::var("PORT").unwrap_or_else(|_| String::from("3000"));
+    let port = port_string.parse::<u16>().unwrap_or(3000);
+    let addr = SocketAddr::from((host, port));
+
     // build our application with a route
     let app = Router::new()
         .layer(cors)
@@ -70,8 +79,6 @@ async fn main() {
         .route("/clue/:id", post(post_clue))
         .with_state(game_env.clone());
 
-    // run it
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     tracing::debug!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
