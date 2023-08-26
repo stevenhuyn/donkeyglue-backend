@@ -37,6 +37,8 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
+    // TODO: Add panic for OPENAI_API_KEY not being set
+
     let game_env = Arc::new(GameEnvironment {
         controllers: RwLock::new(HashMap::new()),
         word_bank: WordBank::new(),
