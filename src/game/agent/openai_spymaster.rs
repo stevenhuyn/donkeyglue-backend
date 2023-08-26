@@ -73,7 +73,7 @@ impl Spymaster for OpenaiSpymaster {
             .replace("<TEAM>", &self.team.to_string())
             .replace("<BOARD>", &board);
 
-        // tracing::info!("Openai Spymaster first prompt: {system_prompt}");
+        tracing::info!("Openai Spymaster first prompt: {system_prompt}");
 
         let messages = [ChatCompletionRequestMessageArgs::default()
             .role(Role::System)
