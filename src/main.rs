@@ -1,11 +1,13 @@
-use std::{collections::HashMap, net::SocketAddr, sync::Arc};
+use std::{collections::HashMap, env, net::SocketAddr, sync::Arc};
 
 use axum::{
+    http::{header::CONTENT_TYPE, Method},
     routing::{get, post},
     Router,
 };
 use game::{game_controller::GameController, word_bank::WordBank};
 use tokio::sync::RwLock;
+use tower_http::cors::CorsLayer;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
 
@@ -40,8 +42,21 @@ async fn main() {
         word_bank: WordBank::new(),
     });
 
+    let render_env = env::var("RENDER").is_ok();
+
+    let origins = match render_env {
+        false => ["https://localhost:5173".parse().unwrap()],
+        true => ["https://donkeyglue-frontend.onrender.com".parse().unwrap()],
+    };
+
+    let cors = CorsLayer::new()
+        .allow_origin(origins)
+        .allow_methods([Method::GET, Method::POST])
+        .allow_headers([CONTENT_TYPE]);
+
     // build our application with a route
     let app = Router::new()
+        .layer(cors)
         .route("/", get(get_root))
         .with_state(game_env.clone())
         .route("/game", post(post_game))
