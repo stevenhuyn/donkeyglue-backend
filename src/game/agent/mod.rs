@@ -4,7 +4,7 @@ use crate::game::game_state::{Clue, GameState};
 
 use self::{openai_operative::OpenaiOperative, openai_spymaster::OpenaiSpymaster, player::Player};
 
-use super::game_state::Team;
+use super::{game_controller::Role, game_state::Team};
 
 pub mod openai_operative;
 pub mod openai_spymaster;
@@ -38,11 +38,19 @@ pub struct Agents {
 }
 
 impl Agents {
-    pub fn new() -> Self {
+    pub fn new(role: Role) -> Self {
+        let (red_operative, red_spymaster): (Box<dyn Operative>, Box<dyn Spymaster>) = match role {
+            Role::RedOperative => (Box::new(Player::new()), Box::new(Player::new())),
+            Role::RedSpymaster => (
+                Box::new(OpenaiOperative::new(Team::Red)),
+                Box::new(Player::new()),
+            ),
+        };
+
         Self {
-            red_operative: Box::new(OpenaiOperative::new(Team::Red)),
+            red_operative,
+            red_spymaster,
             blue_operative: Box::new(OpenaiOperative::new(Team::Blue)),
-            red_spymaster: Box::new(Player::new()),
             blue_spymaster: Box::new(OpenaiSpymaster::new(Team::Blue)),
         }
     }

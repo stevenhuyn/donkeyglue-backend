@@ -13,8 +13,13 @@ pub enum Role {
 }
 
 #[derive(Debug, Clone, Serialize)]
+#[serde(tag = "type")]
 pub enum ChannelEvent {
-    Playing { game_state: GameState, role: Role },
+    Playing {
+        #[serde(rename = "gameState")]
+        game_state: GameState,
+        role: Role,
+    },
 }
 
 pub struct GameController {
@@ -35,7 +40,7 @@ impl GameController {
             role: role.clone(),
         };
         let (sender, receiver) = watch::channel(initial_channel_event);
-        let agents = Agents::new();
+        let agents = Agents::new(role.clone());
         GameController {
             game_state: RwLock::new(game_state),
             sender,
