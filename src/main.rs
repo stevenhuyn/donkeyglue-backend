@@ -42,9 +42,11 @@ async fn main() {
         word_bank: WordBank::new(),
     });
 
-    let render_env = env::var("RENDER").is_ok();
+    let railway_env = env::var("RAILWAY_PROJECT_NAME");
+    tracing::debug!("railway_env: {:?}", railway_env);
+    let railway_env = railway_env.is_ok();
 
-    let origins = match render_env {
+    let origins = match railway_env {
         false => ["https://localhost:5173".parse().unwrap()],
         true => ["https://donkeyglue-frontend.onrender.com".parse().unwrap()],
     };
@@ -54,7 +56,7 @@ async fn main() {
         .allow_methods([Method::GET, Method::POST])
         .allow_headers([CONTENT_TYPE]);
 
-    let host = match render_env {
+    let host = match railway_env {
         false => [127, 0, 0, 1],
         true => [0, 0, 0, 0],
     };
