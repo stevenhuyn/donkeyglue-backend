@@ -63,16 +63,13 @@ pub async fn get_game(
 
         let board_hidden = controller.agents().should_hide_board();
         let stream = stream_receiver
-            .map(move |channel_event| match channel_event {
-                channel_event @ ChannelEvent::Playing {
-                    mut game_state,
-                    role,
-                } => {
+            .map(move |mut channel_event| match &mut channel_event {
+                ChannelEvent::Playing { game_state, .. } => {
                     if board_hidden {
-                        game_state = game_state.to_hidden_game_state();
+                        *game_state = game_state.to_hidden_game_state();
                     }
 
-                    Event::default().json_data(&channel_event);
+                    Event::default().json_data(&channel_event)
                 }
             })
             .throttle(Duration::from_secs(3));
