@@ -43,10 +43,6 @@ impl Card {
         }
     }
 
-    pub fn guessed(&self) -> bool {
-        self.guessed
-    }
-
     pub fn word(&self) -> &str {
         &self.word
     }
