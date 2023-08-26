@@ -67,7 +67,6 @@ async fn main() {
 
     // build our application with a route
     let app = Router::new()
-        .layer(cors)
         .route("/", get(get_root))
         .with_state(game_env.clone())
         .route("/game", post(post_game))
@@ -79,7 +78,8 @@ async fn main() {
         .route("/guess/:id", post(post_guess))
         .with_state(game_env.clone())
         .route("/clue/:id", post(post_clue))
-        .with_state(game_env.clone());
+        .with_state(game_env.clone())
+        .layer(cors);
 
     tracing::debug!("listening on {}", addr);
     axum::Server::bind(&addr)
