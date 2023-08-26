@@ -12,6 +12,7 @@ use crate::game::game_state::{Card, GameState, Identity, Team};
 
 use super::Operative;
 
+// TODO: Set GPT version
 pub struct OpenaiOperative {
     client: Client<OpenAIConfig>,
     team: Team,
@@ -103,7 +104,7 @@ impl Operative for OpenaiOperative {
 
         let request = CreateChatCompletionRequestArgs::default()
             .max_tokens(512u16)
-            .model("gpt-4")
+            .model("gpt-3.5-turbo")
             .messages(messages)
             .build()
             .unwrap();
