@@ -199,7 +199,7 @@ impl GameState {
         }
     }
 
-    pub fn get_board(&self) -> &Vec<Card> {
+    pub fn board(&self) -> &Vec<Card> {
         &self.board
     }
 
@@ -224,7 +224,7 @@ impl GameState {
         }
     }
 
-    pub fn get_hidden_board(&self) -> Vec<Card> {
+    pub fn to_hidden_board(&self) -> Vec<Card> {
         tracing::debug!("Get Hidden Board");
 
         self.board
@@ -240,21 +240,21 @@ impl GameState {
             .collect()
     }
 
-    pub fn into_hidden_game_state(&self) -> Self {
+    pub fn to_hidden_game_state(&self) -> Self {
         Self {
-            board: self.get_hidden_board(),
+            board: self.to_hidden_board(),
             phase: self.phase.clone(),
         }
     }
 
-    pub fn get_clue(&self) -> Option<&Clue> {
+    pub fn clue(&self) -> Option<&Clue> {
         match &self.phase {
             Phase::Guess { clue, .. } => Some(clue),
             _ => None,
         }
     }
 
-    pub fn get_phase(&self) -> &Phase {
+    pub fn phase(&self) -> &Phase {
         &self.phase
     }
 }

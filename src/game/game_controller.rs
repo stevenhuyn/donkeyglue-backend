@@ -27,7 +27,7 @@ impl GameController {
         }
     }
 
-    pub fn get_sender(&self) -> &watch::Sender<GameState> {
+    pub fn sender(&self) -> &watch::Sender<GameState> {
         &self.sender
     }
 
@@ -74,30 +74,24 @@ impl GameController {
         if self.is_player_turn().await {
             tracing::info!(
                 "Stepping aborted early cause player turn {:?}",
-                self.game_state.read().await.get_phase()
+                self.game_state.read().await.phase()
             );
             return;
         }
 
         tracing::info!(
             "Initiating Stepping: {:?}",
-            self.game_state.read().await.get_phase()
+            self.game_state.read().await.phase()
         );
         while self.step_game().await.is_some() {
-            tracing::info!(
-                "Stepping game: {:?}",
-                self.game_state.read().await.get_phase()
-            );
+            tracing::info!("Stepping game: {:?}", self.game_state.read().await.phase());
         }
 
-        tracing::info!(
-            "Player Turn: {:?}",
-            self.game_state.read().await.get_phase()
-        );
+        tracing::info!("Player Turn: {:?}", self.game_state.read().await.phase());
     }
 
     async fn step_game(&self) -> Option<()> {
-        let phase = self.game_state.read().await.get_phase().clone();
+        let phase = self.game_state.read().await.phase().clone();
         match phase {
             Phase::Clue { team: Team::Red } => {
                 self.try_apply_clue(self.agents.red_spymaster.as_ref())
@@ -124,7 +118,7 @@ impl GameController {
     }
 
     async fn is_player_turn(&self) -> bool {
-        match self.game_state.read().await.get_phase() {
+        match self.game_state.read().await.phase() {
             Phase::Clue { team: Team::Red } => self.agents.red_spymaster.is_player(),
             Phase::Clue { team: Team::Blue } => self.agents.blue_spymaster.is_player(),
             Phase::Guess {
@@ -185,7 +179,7 @@ impl GameController {
         None
     }
 
-    pub fn get_agents(&self) -> &Agents {
+    pub fn agents(&self) -> &Agents {
         &self.agents
     }
 }

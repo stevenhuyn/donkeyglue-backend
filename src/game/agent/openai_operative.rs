@@ -74,8 +74,8 @@ impl Operative for OpenaiOperative {
     async fn try_gen_guesses(&self, game_state: &GameState) -> Option<Vec<String>> {
         tracing::info!("Openai Operative making guess");
 
-        let clue = format!("{:?}", game_state.get_clue().unwrap());
-        let board = serde_json::to_string(&game_state.get_hidden_board()).unwrap();
+        let clue = format!("{:?}", game_state.clue().unwrap());
+        let board = serde_json::to_string(&game_state.to_hidden_board()).unwrap();
         let system_prompt = OPERATIVE_STEP_1
             .replace("<TEAM>", &self.team.to_string())
             .replace("<BOARD>", &board)

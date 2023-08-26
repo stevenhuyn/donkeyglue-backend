@@ -68,7 +68,7 @@ impl Spymaster for OpenaiSpymaster {
     async fn try_gen_clue(&self, game_state: &GameState) -> Option<Clue> {
         tracing::info!("Openai Spymaster creating clue");
 
-        let board = serde_json::to_string(game_state.get_board()).unwrap();
+        let board = serde_json::to_string(game_state.board()).unwrap();
         let system_prompt = OPERATIVE_STEP_1
             .replace("<TEAM>", &self.team.to_string())
             .replace("<BOARD>", &board);

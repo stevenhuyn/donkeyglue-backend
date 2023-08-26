@@ -48,14 +48,14 @@ pub async fn get_game(
 
     let controllers = game_env.controllers.read().await;
     if let Some(controller) = controllers.get(&game_id) {
-        let receiver = controller.get_sender().subscribe();
+        let receiver = controller.sender().subscribe();
         let stream_receiver = WatchStream::new(receiver);
 
-        let board_hidden = controller.get_agents().should_hide_board();
+        let board_hidden = controller.agents().should_hide_board();
         let stream = stream_receiver
             .map(move |mut game_state| {
                 if board_hidden {
-                    game_state = game_state.into_hidden_game_state();
+                    game_state = game_state.to_hidden_game_state();
                 }
 
                 Event::default().json_data(&game_state)
