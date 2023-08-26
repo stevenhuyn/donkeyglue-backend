@@ -73,12 +73,10 @@ pub async fn get_game(
             }
         });
 
+        // TODO: Why is throttle bad?
+
         return Sse::new(stream)
-            .keep_alive(
-                KeepAlive::default()
-                    .interval(Duration::from_secs(15))
-                    .text(":\n\n"),
-            )
+            .keep_alive(KeepAlive::default())
             .into_response();
     }
 
