@@ -5,6 +5,7 @@ use async_openai::{
 };
 use async_trait::async_trait;
 use backoff::ExponentialBackoffBuilder;
+use itertools::Itertools;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
@@ -35,6 +36,9 @@ You are an expert player of the game Codenames.
 You are playing as the spymaster role for the <TEAM> team.
 Discuss your options and what would be the best clue based on the current game board.
 <BOARD>
+
+The remaining cards you are trying to get your operative to guess are:
+<REMAINING>
 "#;
 
 const OPERATIVE_STEP_2: &str = r#"
@@ -69,9 +73,17 @@ impl Spymaster for OpenaiSpymaster {
         tracing::info!("Openai Spymaster creating clue");
 
         let board = Card::board_string(game_state.board());
+        let remaining_cards: String = game_state
+            .board()
+            .iter()
+            .filter(|card| card.identity() == &self.team && !card.guessed())
+            .map(|card| card.word())
+            .join(", ");
+
         let system_prompt = OPERATIVE_STEP_1
             .replace("<TEAM>", &self.team.to_string())
-            .replace("<BOARD>", &board);
+            .replace("<BOARD>", &board)
+            .replace("<REMAINING>", &remaining_cards);
 
         tracing::info!("Openai Spymaster first prompt: {system_prompt}");
 

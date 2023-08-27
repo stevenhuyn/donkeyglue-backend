@@ -51,6 +51,10 @@ impl Card {
         &self.identity
     }
 
+    pub fn guessed(&self) -> bool {
+        self.guessed
+    }
+
     pub fn board_string(board: &[Card]) -> String {
         let mut str = String::new();
         for chunk in board.chunks(5) {
@@ -107,6 +111,26 @@ impl Clue {
 pub enum Team {
     Red,
     Blue,
+}
+
+impl PartialEq<Team> for Identity {
+    fn eq(&self, other: &Team) -> bool {
+        match (self, other) {
+            (Identity::Red, Team::Red) => true,
+            (Identity::Blue, Team::Blue) => true,
+            _ => false,
+        }
+    }
+}
+
+impl PartialEq<Identity> for Team {
+    fn eq(&self, other: &Identity) -> bool {
+        match (self, other) {
+            (Team::Red, Identity::Red) => true,
+            (Team::Blue, Identity::Blue) => true,
+            _ => false,
+        }
+    }
 }
 
 impl Display for Team {
