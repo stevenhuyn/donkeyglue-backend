@@ -103,7 +103,7 @@ impl Clue {
     }
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, PartialEq)]
 pub enum Team {
     Red,
     Blue,
@@ -242,7 +242,12 @@ impl GameState {
                     return Ok(());
                 }
 
-                if clue.remaining == 0 {
+                if clue.remaining == 0
+                    // TODO: Make better comparison between Identity and Team?
+                    || (card.identity == Identity::Blue && team == &Team::Red)
+                    || (card.identity == Identity::Red && team == &Team::Blue)
+                    || card.identity == Identity::Bystander
+                {
                     self.phase = Phase::Clue { team: team.other() };
                     tracing::debug!("New Phase: {:?}", &self.phase);
                 }
@@ -290,7 +295,7 @@ impl GameState {
             .iter()
             .map(|card| Card {
                 word: card.word.clone(),
-                guessed: false,
+                guessed: card.guessed,
                 identity: match card.guessed {
                     true => card.identity.clone(),
                     false => Identity::Hidden,
