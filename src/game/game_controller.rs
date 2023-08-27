@@ -1,5 +1,10 @@
+use std::time::Duration;
+
 use serde::{Deserialize, Serialize};
-use tokio::sync::{watch, RwLock};
+use tokio::{
+    sync::{watch, RwLock},
+    time::sleep,
+};
 
 use super::{
     agent::{Agents, Operative, Spymaster},
@@ -226,6 +231,7 @@ impl GameController {
                         role: self.role.clone(),
                     };
                     self.sender.send(channel_event).unwrap();
+                    sleep(Duration::from_millis(1000)).await;
                 } else {
                     break;
                 }
