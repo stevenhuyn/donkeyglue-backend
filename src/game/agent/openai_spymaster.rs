@@ -143,7 +143,7 @@ impl Spymaster for OpenaiSpymaster {
 
         let clue: OpenaiSpymasterResponse = serde_json::from_str(&json_guesses).unwrap();
 
-        tracing::debug!("Openai Spymaster Clue: {clue:?}");
+        tracing::debug!("Clue Justifications: {clue:?}");
 
         let clue = Clue::new(clue.word, clue.number);
         tracing::info!("Openai Spymaster Clue: {clue:?}");

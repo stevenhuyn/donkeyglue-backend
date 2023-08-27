@@ -94,7 +94,7 @@ impl Operative for OpenaiOperative {
             .replace("<CLUE>", &clue)
             .replace("<REMAINING>", &remaining_cards);
 
-        tracing::info!("Openai Operative first prompt: {system_prompt}");
+        // tracing::info!("Openai Operative first prompt: {system_prompt}");
 
         let messages = [ChatCompletionRequestMessageArgs::default()
             .role(Role::System)
@@ -162,7 +162,7 @@ impl Operative for OpenaiOperative {
             .as_str()
             .to_string();
 
-        // tracing::info!("Openai Operative Guesses: {json_guesses}");
+        tracing::info!("Openai Operative Guesses: {json_guesses}");
 
         let guesses = serde_json::from_str::<OpenaiOperativeResponse>(&json_guesses)
             .unwrap()
