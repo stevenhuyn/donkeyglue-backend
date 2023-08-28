@@ -4,7 +4,17 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 
+[profile.dev.package.sqlx-macros]
+opt-level = 3
+
 [dependencies]
+sqlx = { version = "0.7", features = [
+    "runtime-tokio-rustls",
+    "postgres",
+    "time",
+    "uuid",
+    "macros",
+] }
 anyhow = "1.0"
 async-openai = "0.14"
 async-trait = "0.1"

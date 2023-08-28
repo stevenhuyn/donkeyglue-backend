@@ -11,14 +11,18 @@ use tower_http::cors::CorsLayer;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
 
-use crate::routes::{
-    clue::post_clue,
-    game::{get_game, post_game, post_game_start},
-    guess::post_guess,
-    root::get_root,
+use crate::{
+    db::hello_db,
+    routes::{
+        clue::post_clue,
+        game::{get_game, post_game, post_game_start},
+        guess::post_guess,
+        root::get_root,
+    },
 };
 
 mod app_error;
+pub mod db;
 mod game;
 mod routes;
 
@@ -38,6 +42,8 @@ async fn main() {
         .init();
 
     // TODO: Add panic for OPENAI_API_KEY not being set
+
+    hello_db().await;
 
     let game_env = Arc::new(GameEnvironment {
         controllers: RwLock::new(HashMap::new()),
