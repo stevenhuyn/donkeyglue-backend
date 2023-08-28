@@ -54,23 +54,6 @@ impl Card {
     pub fn guessed(&self) -> bool {
         self.guessed
     }
-
-    pub fn board_string(board: &[Card]) -> String {
-        let mut str = String::new();
-        for chunk in board.chunks(5) {
-            str.push_str(
-                &chunk
-                    .iter()
-                    .map(|card| card.to_string())
-                    .collect::<Vec<String>>()
-                    .join(","),
-            );
-
-            str.push('\n');
-        }
-
-        str
-    }
 }
 
 impl Display for Card {

@@ -8,7 +8,10 @@ use backoff::ExponentialBackoffBuilder;
 use regex::Regex;
 use serde::Deserialize;
 
-use crate::game::game_state::{Card, GameState, Identity, Team};
+use crate::game::{
+    agent::utils::board_string,
+    game_state::{Card, GameState, Identity, Team},
+};
 
 use super::Operative;
 
@@ -80,7 +83,7 @@ impl Operative for OpenaiOperative {
 
         let clue = format!("{:?}", game_state.clue().unwrap());
         let hidden_board = game_state.to_hidden_board();
-        let board = Card::board_string(&hidden_board);
+        let board = board_string(&hidden_board);
         let remaining_cards = hidden_board
             .into_iter()
             .filter(|card| card.identity() == &Identity::Hidden)

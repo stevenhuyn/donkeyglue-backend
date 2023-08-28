@@ -9,6 +9,7 @@ use super::{game_controller::Role, game_state::Team};
 pub mod openai_operative;
 pub mod openai_spymaster;
 pub mod player;
+mod utils;
 
 #[async_trait]
 pub trait Operative: Send + Sync {

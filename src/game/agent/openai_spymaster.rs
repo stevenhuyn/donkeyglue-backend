@@ -9,7 +9,10 @@ use itertools::Itertools;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
-use crate::game::game_state::{Card, Clue, GameState, Team};
+use crate::game::{
+    agent::utils::board_string,
+    game_state::{Card, Clue, GameState, Team},
+};
 
 use super::Spymaster;
 
@@ -72,7 +75,7 @@ impl Spymaster for OpenaiSpymaster {
     async fn try_gen_clue(&self, game_state: &GameState) -> Option<Clue> {
         tracing::info!("Openai Spymaster creating clue");
 
-        let board = Card::board_string(game_state.board());
+        let board = board_string(game_state.board());
         let remaining_cards: String = game_state
             .board()
             .iter()
