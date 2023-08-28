@@ -142,12 +142,12 @@ pub enum Phase {
     End,
 }
 
-#[derive(Clone, Debug, Serialize)]
-pub enum Action {
-    Guess { word: String },
-    Clue { clue: Clue },
-    Reveal { card: Card },
-}
+// #[derive(Clone, Debug, Serialize)]
+// pub enum Action {
+//     Guess { word: String },
+//     Clue { clue: Clue },
+//     Reveal { card: Card },
+// }
 /// Legal moves only
 #[derive(Clone, Debug, Serialize)]
 pub struct GameState {

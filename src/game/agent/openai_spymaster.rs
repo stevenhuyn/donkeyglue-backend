@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::game::{
     agent::utils::board_string,
-    game_state::{Card, Clue, GameState, Team},
+    game_state::{Clue, GameState, Team},
 };
 
 use super::Spymaster;

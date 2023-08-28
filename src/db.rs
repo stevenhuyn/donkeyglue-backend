@@ -1,4 +1,4 @@
-use sqlx::{postgres::PgPoolOptions, types::time::Date};
+use sqlx::postgres::PgPoolOptions;
 
 #[derive(Debug)]
 struct SimpleTable {

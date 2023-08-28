@@ -10,7 +10,7 @@ use serde::Deserialize;
 
 use crate::game::{
     agent::utils::board_string,
-    game_state::{Card, GameState, Identity, Team},
+    game_state::{GameState, Identity, Team},
 };
 
 use super::Operative;
