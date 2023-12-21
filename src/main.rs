@@ -50,7 +50,7 @@ async fn main() {
 
     let origins = match railway_env {
         false => ["https://localhost:5173".parse().unwrap()],
-        true => ["https://donkeyglue-frontend.onrender.com".parse().unwrap()],
+        true => ["https://donkeyglue.stevenhuyn.com".parse().unwrap()],
     };
 
     let cors = CorsLayer::new()
