@@ -66,6 +66,7 @@ async fn main() {
     let port_string = env::var("PORT").unwrap_or_else(|_| String::from("3000"));
     let port = port_string.parse::<u16>().unwrap_or(3000);
     let addr = SocketAddr::from((host, port));
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
 
     // build our application with a route
     let app = Router::new()
@@ -84,8 +85,6 @@ async fn main() {
         .layer(cors);
 
     tracing::debug!("listening on {}", addr);
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+
+    axum::serve(listener, app).await.unwrap();
 }

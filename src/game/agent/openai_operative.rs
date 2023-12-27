@@ -1,6 +1,9 @@
 use async_openai::{
     config::OpenAIConfig,
-    types::{ChatCompletionRequestMessageArgs, CreateChatCompletionRequestArgs, Role},
+    types::{
+        ChatCompletionRequestMessage, ChatCompletionRequestSystemMessageArgs,
+        CreateChatCompletionRequestArgs,
+    },
     Client,
 };
 use async_trait::async_trait;
@@ -10,7 +13,7 @@ use serde::Deserialize;
 
 use crate::game::{
     agent::utils::board_string,
-    game_state::{Card, GameState, Identity, Team},
+    game_state::{GameState, Identity, Team},
 };
 
 use super::Operative;
@@ -99,11 +102,12 @@ impl Operative for OpenaiOperative {
 
         // tracing::info!("Openai Operative first prompt: {system_prompt}");
 
-        let messages = [ChatCompletionRequestMessageArgs::default()
-            .role(Role::System)
-            .content(&system_prompt)
-            .build()
-            .unwrap()];
+        let messages: [ChatCompletionRequestMessage; 1] =
+            [ChatCompletionRequestSystemMessageArgs::default()
+                .content(&system_prompt)
+                .build()
+                .unwrap()
+                .into()];
 
         let request = CreateChatCompletionRequestArgs::default()
             .max_tokens(512u16)
@@ -129,11 +133,12 @@ impl Operative for OpenaiOperative {
 
         // tracing::info!("Openai Operative second prompt: {system_prompt}");
 
-        let messages = [ChatCompletionRequestMessageArgs::default()
-            .role(Role::System)
-            .content(&system_prompt)
-            .build()
-            .unwrap()];
+        let messages: [ChatCompletionRequestMessage; 1] =
+            [ChatCompletionRequestSystemMessageArgs::default()
+                .content(&system_prompt)
+                .build()
+                .unwrap()
+                .into()];
 
         let request = CreateChatCompletionRequestArgs::default()
             .max_tokens(512u16)

@@ -98,21 +98,19 @@ pub enum Team {
 
 impl PartialEq<Team> for Identity {
     fn eq(&self, other: &Team) -> bool {
-        match (self, other) {
-            (Identity::Red, Team::Red) => true,
-            (Identity::Blue, Team::Blue) => true,
-            _ => false,
-        }
+        matches!(
+            (self, other),
+            (Identity::Red, Team::Red) | (Identity::Blue, Team::Blue)
+        )
     }
 }
 
 impl PartialEq<Identity> for Team {
     fn eq(&self, other: &Identity) -> bool {
-        match (self, other) {
-            (Team::Red, Identity::Red) => true,
-            (Team::Blue, Identity::Blue) => true,
-            _ => false,
-        }
+        matches!(
+            (self, other),
+            (Team::Red, Identity::Red) | (Team::Blue, Identity::Blue)
+        )
     }
 }
 

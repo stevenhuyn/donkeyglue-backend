@@ -1,6 +1,9 @@
 use async_openai::{
     config::OpenAIConfig,
-    types::{ChatCompletionRequestMessageArgs, CreateChatCompletionRequestArgs, Role},
+    types::{
+        ChatCompletionRequestMessage, ChatCompletionRequestSystemMessageArgs,
+        CreateChatCompletionRequestArgs,
+    },
     Client,
 };
 use async_trait::async_trait;
@@ -11,7 +14,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::game::{
     agent::utils::board_string,
-    game_state::{Card, Clue, GameState, Team},
+    game_state::{Clue, GameState, Team},
 };
 
 use super::Spymaster;
@@ -90,11 +93,12 @@ impl Spymaster for OpenaiSpymaster {
 
         tracing::info!("Openai Spymaster first prompt: {system_prompt}");
 
-        let messages = [ChatCompletionRequestMessageArgs::default()
-            .role(Role::System)
-            .content(&system_prompt)
-            .build()
-            .unwrap()];
+        let messages: [ChatCompletionRequestMessage; 1] =
+            [ChatCompletionRequestSystemMessageArgs::default()
+                .content(&system_prompt)
+                .build()
+                .unwrap()
+                .into()];
 
         let request = CreateChatCompletionRequestArgs::default()
             .max_tokens(512u16)
@@ -120,11 +124,12 @@ impl Spymaster for OpenaiSpymaster {
 
         // tracing::info!("Openai Spymaster second prompt: {system_prompt}");
 
-        let messages = [ChatCompletionRequestMessageArgs::default()
-            .role(Role::System)
-            .content(&system_prompt)
-            .build()
-            .unwrap()];
+        let messages: [ChatCompletionRequestMessage; 1] =
+            [ChatCompletionRequestSystemMessageArgs::default()
+                .content(&system_prompt)
+                .build()
+                .unwrap()
+                .into()];
 
         let request = CreateChatCompletionRequestArgs::default()
             .max_tokens(512u16)

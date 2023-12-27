@@ -7,8 +7,9 @@ use axum::{
         sse::{Event, KeepAlive},
         IntoResponse, Sse,
     },
-    Json, TypedHeader,
+    Json,
 };
+use axum_extra::TypedHeader;
 use axum_macros::debug_handler;
 use serde::{Deserialize, Serialize};
 use tokio_stream::{wrappers::WatchStream, StreamExt};
