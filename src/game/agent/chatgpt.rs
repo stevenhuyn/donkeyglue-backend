@@ -72,6 +72,34 @@ The format of the response should be an array of guesses with justification in o
 ```
 "#;
 
+const SPYMASTER_STEP_1: &str = r#"
+You are an expert player of the game Codenames. 
+You are playing as the spymaster role for the <TEAM> team.
+Discuss your options and what would be the best clue based on the current game board.
+<BOARD>
+
+The remaining cards you are trying to get your operative to guess are:
+<REMAINING>
+"#;
+
+const SPYMASTER_STEP_2: &str = r#"
+You are an agent who distills the clue from a body of text that discusses the best clue from the given game state for the game Codenames.
+
+Summarize the following into a JSON object of a clue:
+<CHAIN>
+
+The format of the response should be a JSON object of the following format
+
+```json
+{
+    "word": "<clue word>",
+    "number": <number of codenames associated with the clue word>
+    "justification": "<why is this clue good>",
+    "associations": [<array of codenames that the clue word is associated with (doesn't have to be same length as `number`)>]
+}
+```
+"#;
+
 impl ChatGpt {
     pub fn new(team: Team) -> Self {
         let backoff = ExponentialBackoffBuilder::new()
@@ -196,7 +224,7 @@ impl ChatGpt {
             .map(|card| card.word())
             .join(", ");
 
-        let system_prompt = OPERATIVE_STEP_1
+        let system_prompt = SPYMASTER_STEP_1
             .replace("<TEAM>", &self.team.to_string())
             .replace("<BOARD>", &board)
             .replace("<REMAINING>", &remaining_cards);
@@ -230,7 +258,7 @@ impl ChatGpt {
 
         // tracing::debug!("Openai Spymaster response 1: {response_content}");
 
-        let system_prompt = OPERATIVE_STEP_2.replace("<CHAIN>", &response_content);
+        let system_prompt = SPYMASTER_STEP_2.replace("<CHAIN>", &response_content);
 
         // tracing::info!("Openai Spymaster second prompt: {system_prompt}");
 
@@ -271,6 +299,7 @@ impl ChatGpt {
             .as_str()
             .to_string();
 
+        // tracing::info!("Openai Spymaster Guesses: {json_guesses}");
         let clue: OpenaiSpymasterResponse = serde_json::from_str(&json_guesses).unwrap();
 
         tracing::debug!("Clue Justifications: {clue:?}");

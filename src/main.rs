@@ -48,6 +48,9 @@ async fn main() {
     tracing::debug!("railway_env: {:?}", railway_env);
     let railway_env = railway_env.is_ok();
 
+    let openai_env = env::var("OPENAI_API_KEY");
+    tracing::debug!("OPENAI_API_KEY exists: {:?}", openai_env.is_ok());
+
     let origins = match railway_env {
         false => ["https://localhost:5173".parse().unwrap()],
         true => ["https://donkeyglue.stevenhuyn.com".parse().unwrap()],
