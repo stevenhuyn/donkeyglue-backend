@@ -132,25 +132,17 @@ impl GameController {
         let phase = self.game_state.read().await.phase().clone();
         match phase {
             Phase::Clue { team: Team::Red } => {
-                self.try_apply_clue(self.agents.red_spymaster.as_ref())
-                    .await
+                self.try_apply_clue(&self.agents.red_spymaster).await
             }
             Phase::Clue { team: Team::Blue } => {
-                self.try_apply_clue(self.agents.blue_spymaster.as_ref())
-                    .await
+                self.try_apply_clue(&self.agents.blue_spymaster).await
             }
             Phase::Guess {
                 team: Team::Blue, ..
-            } => {
-                self.try_apply_guess(self.agents.blue_operative.as_ref())
-                    .await
-            }
+            } => self.try_apply_guess(&self.agents.blue_operative).await,
             Phase::Guess {
                 team: Team::Red, ..
-            } => {
-                self.try_apply_guess(self.agents.red_operative.as_ref())
-                    .await
-            }
+            } => self.try_apply_guess(&self.agents.red_operative).await,
             Phase::End => None,
         }
     }
@@ -185,7 +177,7 @@ impl GameController {
         }
     }
 
-    async fn try_apply_clue(&self, spymaster: &dyn Spymaster) -> Option<()> {
+    async fn try_apply_clue(&self, spymaster: &Spymaster) -> Option<()> {
         let clue = {
             let game_state = self.game_state.read().await;
             spymaster.try_gen_clue(&game_state).await
@@ -209,7 +201,7 @@ impl GameController {
         None
     }
 
-    async fn try_apply_guess(&self, operative: &dyn Operative) -> Option<()> {
+    async fn try_apply_guess(&self, operative: &Operative) -> Option<()> {
         let guesses = {
             let game_state = self.game_state.read().await;
             operative.try_gen_guesses(&game_state).await

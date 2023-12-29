@@ -1,65 +1,84 @@
-use async_trait::async_trait;
-
-use crate::game::game_state::{Clue, GameState};
-
-use self::{openai_operative::OpenaiOperative, openai_spymaster::OpenaiSpymaster, player::Player};
+use self::{chatgpt::ChatGpt, player::Player};
 
 use super::{game_controller::Role, game_state::Team};
 
-pub mod openai_operative;
-pub mod openai_spymaster;
+pub mod chatgpt;
 pub mod player;
 mod utils;
 
-#[async_trait]
-pub trait Operative: Send + Sync {
-    /// Operative tries to generate guesses, returns None if human Player
-    async fn try_gen_guesses(&self, game_state: &GameState) -> Option<Vec<String>>;
+pub enum Operative {
+    Player(Player),
+    ChatGpt(ChatGpt),
+}
 
-    fn is_player(&self) -> bool {
-        tracing::debug!("Is Player False");
+impl Operative {
+    pub fn is_player(&self) -> bool {
+        match self {
+            Self::Player(_) => true,
+            Self::ChatGpt(_) => false,
+        }
+    }
 
-        false
+    pub async fn try_gen_guesses(
+        &self,
+        game_state: &super::game_state::GameState,
+    ) -> Option<Vec<String>> {
+        match self {
+            Self::Player(player) => player.try_gen_guesses(game_state).await,
+            Self::ChatGpt(chatgpt) => chatgpt.try_gen_guesses(game_state).await,
+        }
     }
 }
 
-#[async_trait]
-pub trait Spymaster: Send + Sync {
-    /// Spymaster tries to generate a clue, returns None if human Player
-    async fn try_gen_clue(&self, game_state: &GameState) -> Option<Clue>;
+pub enum Spymaster {
+    Player(Player),
+    ChatGpt(ChatGpt),
+}
 
-    fn is_player(&self) -> bool {
-        tracing::debug!("Is Player False");
+impl Spymaster {
+    pub fn is_player(&self) -> bool {
+        match self {
+            Self::Player(_) => true,
+            Self::ChatGpt(_) => false,
+        }
+    }
 
-        false
+    pub async fn try_gen_clue(
+        &self,
+        game_state: &super::game_state::GameState,
+    ) -> Option<super::game_state::Clue> {
+        match self {
+            Self::Player(player) => player.try_gen_clue(game_state).await,
+            Self::ChatGpt(chatgpt) => chatgpt.try_gen_clue(game_state).await,
+        }
     }
 }
 
 pub struct Agents {
-    pub red_operative: Box<dyn Operative>,
-    pub blue_operative: Box<dyn Operative>,
-    pub red_spymaster: Box<dyn Spymaster>,
-    pub blue_spymaster: Box<dyn Spymaster>,
+    pub red_operative: Operative,
+    pub blue_operative: Operative,
+    pub red_spymaster: Spymaster,
+    pub blue_spymaster: Spymaster,
 }
 
 impl Agents {
     pub fn new(role: Role) -> Self {
-        let (red_operative, red_spymaster): (Box<dyn Operative>, Box<dyn Spymaster>) = match role {
+        let (red_operative, red_spymaster): (Operative, Spymaster) = match role {
             Role::RedOperative => (
-                Box::new(Player::new()),
-                Box::new(OpenaiSpymaster::new(Team::Red)),
+                Operative::Player(Player),
+                Spymaster::ChatGpt(ChatGpt::new(Team::Red)),
             ),
             Role::RedSpymaster => (
-                Box::new(OpenaiOperative::new(Team::Red)),
-                Box::new(Player::new()),
+                Operative::ChatGpt(ChatGpt::new(Team::Red)),
+                Spymaster::Player(Player),
             ),
         };
 
         Self {
             red_operative,
             red_spymaster,
-            blue_operative: Box::new(OpenaiOperative::new(Team::Blue)),
-            blue_spymaster: Box::new(OpenaiSpymaster::new(Team::Blue)),
+            blue_operative: Operative::ChatGpt(ChatGpt::new(Team::Blue)),
+            blue_spymaster: Spymaster::ChatGpt(ChatGpt::new(Team::Blue)),
         }
     }
 

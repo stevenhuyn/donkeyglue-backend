@@ -6,35 +6,39 @@ use async_openai::{
     },
     Client,
 };
-use async_trait::async_trait;
 use backoff::ExponentialBackoffBuilder;
+use itertools::Itertools;
 use regex::Regex;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::game::{
     agent::utils::board_string,
-    game_state::{GameState, Identity, Team},
+    game_state::{Clue, GameState, Identity, Team},
 };
 
-use super::Operative;
+type OpenaiOperativeResponse = Vec<OpenaiOperativeGuess>;
 
-// TODO: Set GPT version
-pub struct OpenaiOperative {
-    client: Client<OpenAIConfig>,
-    team: Team,
+#[derive(Debug, Clone, Deserialize)]
+struct OpenaiOperativeGuess {
+    guess: String,
+    #[serde(rename = "justification")]
+    _justification: String,
+    #[serde(rename = "confidence")]
+    _confidence: f32,
 }
 
-impl OpenaiOperative {
-    pub fn new(team: Team) -> Self {
-        let backoff = ExponentialBackoffBuilder::new()
-            .with_max_elapsed_time(Some(std::time::Duration::from_secs(60)))
-            .build();
+#[derive(Deserialize, Serialize, Debug)]
+struct OpenaiSpymasterResponse {
+    word: String,
+    number: u8,
+    justification: String,
+    associations: Vec<String>,
+}
 
-        Self {
-            client: Client::new().with_backoff(backoff),
-            team,
-        }
-    }
+// TODO: Set GPT version
+pub struct ChatGpt {
+    client: Client<OpenAIConfig>,
+    team: Team,
 }
 
 const OPERATIVE_STEP_1: &str = r#"
@@ -68,20 +72,19 @@ The format of the response should be an array of guesses with justification in o
 ```
 "#;
 
-type OpenaiOperativeResponse = Vec<OpenaiOperativeGuess>;
+impl ChatGpt {
+    pub fn new(team: Team) -> Self {
+        let backoff = ExponentialBackoffBuilder::new()
+            .with_max_elapsed_time(Some(std::time::Duration::from_secs(60)))
+            .build();
 
-#[derive(Debug, Clone, Deserialize)]
-struct OpenaiOperativeGuess {
-    guess: String,
-    #[serde(rename = "justification")]
-    _justification: String,
-    #[serde(rename = "confidence")]
-    _confidence: f32,
-}
+        Self {
+            client: Client::new().with_backoff(backoff),
+            team,
+        }
+    }
 
-#[async_trait]
-impl Operative for OpenaiOperative {
-    async fn try_gen_guesses(&self, game_state: &GameState) -> Option<Vec<String>> {
+    pub async fn try_gen_guesses(&self, game_state: &GameState) -> Option<Vec<String>> {
         tracing::info!("Openai Operative making guess");
 
         let clue = format!("{:?}", game_state.clue().unwrap());
@@ -180,5 +183,100 @@ impl Operative for OpenaiOperative {
 
         tracing::debug!("Guess: {:?}", guesses);
         Some(guesses)
+    }
+
+    pub async fn try_gen_clue(&self, game_state: &GameState) -> Option<Clue> {
+        tracing::info!("Openai Spymaster creating clue");
+
+        let board = board_string(game_state.board());
+        let remaining_cards: String = game_state
+            .board()
+            .iter()
+            .filter(|card| card.identity() == &self.team && !card.guessed())
+            .map(|card| card.word())
+            .join(", ");
+
+        let system_prompt = OPERATIVE_STEP_1
+            .replace("<TEAM>", &self.team.to_string())
+            .replace("<BOARD>", &board)
+            .replace("<REMAINING>", &remaining_cards);
+
+        tracing::info!("Openai Spymaster first prompt: {system_prompt}");
+
+        let messages: [ChatCompletionRequestMessage; 1] =
+            [ChatCompletionRequestSystemMessageArgs::default()
+                .content(&system_prompt)
+                .build()
+                .unwrap()
+                .into()];
+
+        let request = CreateChatCompletionRequestArgs::default()
+            .max_tokens(512u16)
+            .model("gpt-3.5-turbo")
+            .messages(messages)
+            .build()
+            .unwrap();
+
+        let openai_response = self.client.chat().create(request).await.unwrap();
+
+        let response_content = openai_response
+            .choices
+            .first()
+            .unwrap()
+            .message
+            .content
+            .clone()
+            .unwrap();
+
+        // tracing::debug!("Openai Spymaster response 1: {response_content}");
+
+        let system_prompt = OPERATIVE_STEP_2.replace("<CHAIN>", &response_content);
+
+        // tracing::info!("Openai Spymaster second prompt: {system_prompt}");
+
+        let messages: [ChatCompletionRequestMessage; 1] =
+            [ChatCompletionRequestSystemMessageArgs::default()
+                .content(&system_prompt)
+                .build()
+                .unwrap()
+                .into()];
+
+        let request = CreateChatCompletionRequestArgs::default()
+            .max_tokens(512u16)
+            .model("gpt-3.5-turbo")
+            .messages(messages)
+            .build()
+            .unwrap();
+
+        let openai_response = self.client.chat().create(request).await.unwrap();
+
+        let response_content = openai_response
+            .choices
+            .first()
+            .unwrap()
+            .message
+            .content
+            .clone()
+            .unwrap();
+
+        // tracing::info!("Openai Spymaster second 2: {system_prompt}");
+
+        let re = Regex::new(r"\{[^\}]*\}").unwrap();
+
+        let json_guesses = re
+            .captures(&response_content)
+            .unwrap()
+            .get(0)
+            .unwrap()
+            .as_str()
+            .to_string();
+
+        let clue: OpenaiSpymasterResponse = serde_json::from_str(&json_guesses).unwrap();
+
+        tracing::debug!("Clue Justifications: {clue:?}");
+
+        let clue = Clue::new(clue.word, clue.number);
+        tracing::info!("Openai Spymaster Clue: {clue:?}");
+        Some(clue)
     }
 }
