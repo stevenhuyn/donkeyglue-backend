@@ -6,7 +6,7 @@ publish = false
 
 [dependencies]
 anyhow = "1.0"
-async-openai = "0.17"
+async-openai = "0.20"
 async-trait = "0.1"
 axum = "0.7"
 axum-extra = { version = "0.9", features = ["typed-header"] }
