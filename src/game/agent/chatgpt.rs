@@ -142,7 +142,7 @@ impl ChatGpt {
 
         let request = CreateChatCompletionRequestArgs::default()
             .max_tokens(512u16)
-            .model("gpt-3.5-turbo")
+            .model("gpt-4o")
             .messages(messages)
             .build()
             .unwrap();
@@ -173,7 +173,7 @@ impl ChatGpt {
 
         let request = CreateChatCompletionRequestArgs::default()
             .max_tokens(512u16)
-            .model("gpt-3.5-turbo")
+            .model("gpt-4o")
             .messages(messages)
             .build()
             .unwrap();
@@ -240,7 +240,7 @@ impl ChatGpt {
 
         let request = CreateChatCompletionRequestArgs::default()
             .max_tokens(512u16)
-            .model("gpt-3.5-turbo")
+            .model("gpt-4o")
             .messages(messages)
             .build()
             .unwrap();
@@ -271,7 +271,7 @@ impl ChatGpt {
 
         let request = CreateChatCompletionRequestArgs::default()
             .max_tokens(512u16)
-            .model("gpt-3.5-turbo")
+            .model("gpt-4o")
             .messages(messages)
             .build()
             .unwrap();
