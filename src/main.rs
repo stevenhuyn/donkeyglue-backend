@@ -49,8 +49,8 @@ async fn main() {
         panic!("ENV must be either prod or dev");
     }
 
-    let openai_env = env::var("OPENAI_SECRET_KEY");
-    tracing::debug!("OPENAI_SECRET_KEY exists: {:?}", openai_env.is_ok());
+    let openai_env = env::var("OPENAI_API_KEY");
+    tracing::debug!("OPENAI_API_KEY exists: {:?}", openai_env.is_ok());
 
     let origins = match env.as_str() {
         "dev" => ["https://localhost:5173".parse().unwrap()],
