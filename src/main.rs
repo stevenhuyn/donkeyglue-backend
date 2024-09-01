@@ -29,6 +29,7 @@ pub struct GameEnvironment {
 
 #[tokio::main]
 async fn main() {
+    dotenvy::dotenv().expect("Failed to find/read .env");
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -37,23 +38,24 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    // TODO: Add panic for OPENAI_API_KEY not being set
-
     let game_env = Arc::new(GameEnvironment {
         controllers: RwLock::new(HashMap::new()),
         word_bank: WordBank::new(),
     });
 
-    let railway_env = env::var("RAILWAY_PROJECT_NAME");
-    tracing::debug!("railway_env: {:?}", railway_env);
-    let railway_env = railway_env.is_ok();
+    let env = env::var("ENV").expect("No ENV=prod|dev environment variable found");
+    tracing::debug!("env: {:?}", env);
+    if (env != "prod") && (env != "dev") {
+        panic!("ENV must be either prod or dev");
+    }
 
-    let openai_env = env::var("OPENAI_API_KEY");
-    tracing::debug!("OPENAI_API_KEY exists: {:?}", openai_env.is_ok());
+    let openai_env = env::var("OPENAI_SECRET_KEY");
+    tracing::debug!("OPENAI_SECRET_KEY exists: {:?}", openai_env.is_ok());
 
-    let origins = match railway_env {
-        false => ["https://localhost:5173".parse().unwrap()],
-        true => ["https://donkeyglue.stevenhuyn.com".parse().unwrap()],
+    let origins = match env.as_str() {
+        "dev" => ["https://localhost:5173".parse().unwrap()],
+        "prod" => ["https://donkeyglue.stevenhuyn.com".parse().unwrap()],
+        _ => unreachable!(),
     };
 
     let cors = CorsLayer::new()
@@ -61,9 +63,10 @@ async fn main() {
         .allow_methods([Method::GET, Method::POST])
         .allow_headers([CONTENT_TYPE]);
 
-    let host = match railway_env {
-        false => [127, 0, 0, 1],
-        true => [0, 0, 0, 0],
+    let host = match env.as_str() {
+        "dev" => [127, 0, 0, 1],
+        "prod" => [127, 0, 0, 1],
+        _ => unreachable!(),
     };
 
     let port_string = env::var("PORT").unwrap_or_else(|_| String::from("3000"));
