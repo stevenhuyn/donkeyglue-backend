@@ -135,7 +135,7 @@ impl ChatGpt {
 
         let messages: [ChatCompletionRequestMessage; 1] =
             [ChatCompletionRequestSystemMessageArgs::default()
-                .content(&system_prompt)
+                .content(system_prompt)
                 .build()
                 .unwrap()
                 .into()];
@@ -166,7 +166,7 @@ impl ChatGpt {
 
         let messages: [ChatCompletionRequestMessage; 1] =
             [ChatCompletionRequestSystemMessageArgs::default()
-                .content(&system_prompt)
+                .content(system_prompt)
                 .build()
                 .unwrap()
                 .into()];
@@ -233,7 +233,7 @@ impl ChatGpt {
 
         let messages: [ChatCompletionRequestMessage; 1] =
             [ChatCompletionRequestSystemMessageArgs::default()
-                .content(&system_prompt)
+                .content(system_prompt)
                 .build()
                 .unwrap()
                 .into()];
@@ -264,7 +264,7 @@ impl ChatGpt {
 
         let messages: [ChatCompletionRequestMessage; 1] =
             [ChatCompletionRequestSystemMessageArgs::default()
-                .content(&system_prompt)
+                .content(system_prompt)
                 .build()
                 .unwrap()
                 .into()];
