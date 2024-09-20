@@ -70,6 +70,7 @@ pub async fn get_game(
                     *game_state = game_state.to_hidden_game_state();
                 }
 
+                tracing::info!("get_game Event: {:?}", user_agent);
                 Event::default().json_data(&channel_event)
             }
         });
