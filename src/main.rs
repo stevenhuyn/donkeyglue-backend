@@ -65,7 +65,7 @@ async fn main() {
 
     let host = match env.as_str() {
         "dev" => [127, 0, 0, 1],
-        "prod" => [127, 0, 0, 1],
+        "prod" => [0, 0, 0, 0],
         _ => unreachable!(),
     };
 
