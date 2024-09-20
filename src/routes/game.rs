@@ -3,21 +3,17 @@ use std::sync::Arc;
 use anyhow::{Error, Result};
 use axum::{
     extract::{Path, State},
-    response::{
-        sse::{Event, KeepAlive},
-        IntoResponse, Sse,
-    },
     Json,
 };
 use axum_extra::TypedHeader;
 use axum_macros::debug_handler;
 use serde::{Deserialize, Serialize};
-use tokio_stream::{wrappers::WatchStream, StreamExt};
 use uuid::Uuid;
 
 use crate::{
     app_error::AppError,
-    game::game_controller::{ChannelEvent, GameController, Role},
+    game::game_controller::{GameController, Role},
+    game::game_state::GameState,
     GameEnvironment,
 };
 
@@ -50,41 +46,32 @@ pub async fn post_game(
     Ok(Json(PostGameResponse { game_id }))
 }
 
+#[derive(Debug, Clone, Serialize)]
+#[serde(tag = "type")]
+pub enum GetGameResponse {
+    Playing {
+        #[serde(rename = "gameState")]
+        game_state: GameState,
+        role: Role,
+    },
+}
+
 pub async fn get_game(
     Path(game_id): Path<Uuid>,
     TypedHeader(user_agent): TypedHeader<headers::UserAgent>,
     State(game_env): State<Arc<GameEnvironment>>,
-) -> impl IntoResponse {
+) -> Result<Json<GetGameResponse>, AppError> {
     tracing::info!("get_game: {:?}", user_agent);
 
     let controllers = game_env.controllers.read().await;
     if let Some(controller) = controllers.get(&game_id) {
-        let receiver = controller.sender().subscribe();
-        let stream_receiver = WatchStream::new(receiver);
-
-        let board_hidden = controller.agents().should_hide_board();
-
-        let stream = stream_receiver.map(move |mut channel_event| match &mut channel_event {
-            ChannelEvent::Playing { game_state, .. } => {
-                if board_hidden {
-                    *game_state = game_state.to_hidden_game_state();
-                }
-
-                tracing::info!("get_game Event: {:?}", user_agent);
-                Event::default().json_data(&channel_event)
-            }
-        });
-
-        // TODO: Why is throttle bad?
-
-        return Sse::new(stream)
-            .keep_alive(KeepAlive::default())
-            .into_response();
+        let game_data: GetGameResponse = controller.game_data().await;
+        return Ok(Json(game_data));
     }
 
     let err = Error::msg("Could not find the game");
     tracing::warn!("{}", err);
-    AppError(err).into_response()
+    Err(AppError(err))
 }
 
 #[debug_handler]

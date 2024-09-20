@@ -2,9 +2,11 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use tokio::{
-    sync::{watch, RwLock},
+    sync::{RwLock},
     time::sleep,
 };
+
+use crate::routes::game::GetGameResponse;
 
 use super::{
     agent::{Agents, Operative, Spymaster},
@@ -17,23 +19,11 @@ pub enum Role {
     RedSpymaster,
 }
 
-#[derive(Debug, Clone, Serialize)]
-#[serde(tag = "type")]
-pub enum ChannelEvent {
-    Playing {
-        #[serde(rename = "gameState")]
-        game_state: GameState,
-        role: Role,
-    },
-}
+pub type GameData = GetGameResponse;
 
 pub struct GameController {
     // TODO: make RwLock<GameState> the self method type
     game_state: RwLock<GameState>,
-    sender: watch::Sender<ChannelEvent>,
-
-    // Adding a single receiver so sender can send while no SSE sessions are active
-    _receiver: watch::Receiver<ChannelEvent>,
     agents: Agents,
     role: Role,
 }
@@ -41,23 +31,12 @@ pub struct GameController {
 impl GameController {
     pub fn new(role: Role, words: Vec<String>) -> Self {
         let game_state = GameState::new(words);
-        let initial_channel_event = ChannelEvent::Playing {
-            game_state: game_state.clone(),
-            role: role.clone(),
-        };
-        let (sender, receiver) = watch::channel(initial_channel_event);
         let agents = Agents::new(role.clone());
         GameController {
             game_state: RwLock::new(game_state),
-            sender,
-            _receiver: receiver,
             agents,
             role,
         }
-    }
-
-    pub fn sender(&self) -> &watch::Sender<ChannelEvent> {
-        &self.sender
     }
 
     pub async fn player_guess(&self, guess: String) -> Option<()> {
@@ -70,12 +49,6 @@ impl GameController {
 
         let mut game_state = self.game_state.write().await;
         if let Ok(()) = game_state.make_guess(guess) {
-            tracing::debug!("Player Guess: Update SSE");
-            let channel_event = ChannelEvent::Playing {
-                game_state: game_state.clone(),
-                role: self.role.clone(),
-            };
-            self.sender.send(channel_event).unwrap();
             return Some(());
         }
 
@@ -93,14 +66,6 @@ impl GameController {
         let clue = Clue::new(word, count);
         let mut game_state = self.game_state.write().await;
         if let Ok(()) = game_state.provide_clue(clue) {
-            tracing::debug!("Player Clue: Update SSE");
-            let channel_event = ChannelEvent::Playing {
-                game_state: game_state.clone(),
-                role: self.role.clone(),
-            };
-            let res = self.sender.send(channel_event);
-            println!("{:?}", res);
-
             return Some(());
         }
 
@@ -184,17 +149,8 @@ impl GameController {
         };
 
         if let Some(clue) = clue {
-            {
-                tracing::debug!("AI Clue: {:?}", clue);
-                let _ = self.game_state.write().await.provide_clue(clue);
-            }
-
-            tracing::debug!("AI Clue: Update SSE");
-            let channel_event = ChannelEvent::Playing {
-                game_state: self.game_state.read().await.clone(),
-                role: self.role.clone(),
-            };
-            self.sender.send(channel_event).unwrap();
+            tracing::debug!("AI Clue: {:?}", clue);
+            let _ = self.game_state.write().await.provide_clue(clue);
             return Some(());
         }
 
@@ -217,12 +173,6 @@ impl GameController {
                 };
 
                 if guess_result.is_ok() {
-                    tracing::debug!("AI Guess - Update SSE");
-                    let channel_event = ChannelEvent::Playing {
-                        game_state: self.game_state.read().await.clone(),
-                        role: self.role.clone(),
-                    };
-                    self.sender.send(channel_event).unwrap();
                     sleep(Duration::from_millis(1000)).await;
                 } else {
                     break;
@@ -237,5 +187,16 @@ impl GameController {
 
     pub fn agents(&self) -> &Agents {
         &self.agents
+    }
+
+    pub async fn game_data(&self) -> GameData {
+        let mut game_state = self.game_state.read().await.clone();
+        let role = self.role.clone();
+
+        if self.agents().should_hide_board() {
+            game_state = game_state.to_hidden_game_state();
+        }
+
+        GameData::Playing { game_state, role }
     }
 }

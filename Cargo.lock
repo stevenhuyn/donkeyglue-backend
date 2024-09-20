@@ -379,13 +379,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-openai",
- "async-trait",
  "axum",
  "axum-extra",
  "axum-macros",
  "backoff",
  "dotenvy",
- "futures",
  "headers",
  "itertools",
  "rand",
@@ -393,7 +391,6 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "tokio-stream",
  "tower-http",
  "tracing",
  "tracing-subscriber",
@@ -1574,7 +1571,6 @@ dependencies = [
  "futures-core",
  "pin-project-lite",
  "tokio",
- "tokio-util",
 ]
 
 [[package]]
