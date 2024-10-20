@@ -2,7 +2,7 @@ use async_openai::{
     config::OpenAIConfig,
     types::{
         ChatCompletionRequestMessage, ChatCompletionRequestSystemMessageArgs,
-        CreateChatCompletionRequestArgs,
+        CreateChatCompletionRequestArgs, ResponseFormat,
     },
     Client,
 };
@@ -42,7 +42,7 @@ pub struct ChatGpt {
 }
 
 const OPERATIVE_STEP_1: &str = r#"
-You are an expert player of the game Codenames. 
+You are an expert player of the game Codenames.
 You are playing as the operative role on the <TEAM> team.
 Discuss your options and what your guesses should be based on the current game board and clue.
 <BOARD>
@@ -73,7 +73,7 @@ The format of the response should be an array of guesses with justification in o
 "#;
 
 const SPYMASTER_STEP_1: &str = r#"
-You are an expert player of the game Codenames. 
+You are an expert player of the game Codenames.
 You are playing as the spymaster role for the <TEAM> team.
 Discuss your options and what would be the best clue based on the current game board.
 <BOARD>
@@ -144,6 +144,7 @@ impl ChatGpt {
             .max_tokens(512u16)
             .model("gpt-4o")
             .messages(messages)
+            .response_format(ResponseFormat::JsonObject)
             .build()
             .unwrap();
 
@@ -175,6 +176,7 @@ impl ChatGpt {
             .max_tokens(512u16)
             .model("gpt-4o")
             .messages(messages)
+            .response_format(ResponseFormat::JsonObject)
             .build()
             .unwrap();
 
@@ -242,6 +244,7 @@ impl ChatGpt {
             .max_tokens(512u16)
             .model("gpt-4o")
             .messages(messages)
+            .response_format(ResponseFormat::JsonObject)
             .build()
             .unwrap();
 
@@ -273,6 +276,7 @@ impl ChatGpt {
             .max_tokens(512u16)
             .model("gpt-4o")
             .messages(messages)
+            .response_format(ResponseFormat::JsonObject)
             .build()
             .unwrap();
 
