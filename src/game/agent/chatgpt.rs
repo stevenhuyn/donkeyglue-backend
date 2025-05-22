@@ -243,7 +243,6 @@ impl ChatGpt {
             .max_tokens(512u16)
             .model("gpt-4o")
             .messages(messages)
-            .response_format(ResponseFormat::JsonObject)
             .build()
             .unwrap();
 
