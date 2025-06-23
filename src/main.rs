@@ -80,13 +80,13 @@ async fn main() {
         .with_state(game_env.clone())
         .route("/game", post(post_game))
         .with_state(game_env.clone())
-        .route("/game/:id", get(get_game))
+        .route("/game/{id}", get(get_game))
         .with_state(game_env.clone())
-        .route("/game/start/:id", post(post_game_start))
+        .route("/game/start/{id}", post(post_game_start))
         .with_state(game_env.clone())
-        .route("/guess/:id", post(post_guess))
+        .route("/guess/{id}", post(post_guess))
         .with_state(game_env.clone())
-        .route("/clue/:id", post(post_clue))
+        .route("/clue/{id}", post(post_clue))
         .with_state(game_env.clone())
         .layer(cors);
 

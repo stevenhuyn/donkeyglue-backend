@@ -3,7 +3,7 @@ use std::{
     io::{self, BufRead},
 };
 
-use rand::seq::SliceRandom;
+use rand::seq::{IndexedRandom, SliceRandom};
 
 pub struct WordBank {
     inner: Vec<String>,
@@ -20,7 +20,7 @@ impl WordBank {
     }
 
     pub fn get_word_set(&self, count: usize) -> Vec<String> {
-        let random_words = self.inner.choose_multiple(&mut rand::thread_rng(), count);
+        let random_words = self.inner.choose_multiple(&mut rand::rng(), count);
         random_words.into_iter().cloned().collect()
     }
 }
