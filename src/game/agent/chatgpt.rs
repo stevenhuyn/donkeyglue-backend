@@ -6,7 +6,6 @@ use async_openai::{
     },
     Client,
 };
-use backoff::ExponentialBackoffBuilder;
 use itertools::Itertools;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -102,12 +101,8 @@ The format of the response should be a JSON object of the following format
 
 impl ChatGpt {
     pub fn new(team: Team) -> Self {
-        let backoff = ExponentialBackoffBuilder::new()
-            .with_max_elapsed_time(Some(std::time::Duration::from_secs(60)))
-            .build();
-
         Self {
-            client: Client::new().with_backoff(backoff),
+            client: Client::new(),
             team,
         }
     }

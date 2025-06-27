@@ -10,7 +10,6 @@ async-openai = "0.28"
 axum = "0.8"
 axum-extra = { version = "0.10", features = ["typed-header"] }
 axum-macros = "0.5"
-backoff = { version = "0.4.0", features = ["tokio"] }
 dotenvy = "0.15.7"
 headers = "0.4"
 itertools = "0.14"
